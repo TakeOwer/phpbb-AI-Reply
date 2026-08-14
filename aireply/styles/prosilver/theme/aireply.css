@@ -1,0 +1,185 @@
+/* AI Reply — badge di stato sotto il post che ha innescato il bot */
+
+.aireply-status {
+	display: inline-flex;
+	align-items: center;
+	gap: .45em;
+	margin: .4em 0 0;
+	padding: .25em .7em;
+	border-radius: 1em;
+	font-size: .85em;
+	line-height: 1.5;
+	background: rgba(0, 0, 0, .04);
+	color: inherit;
+	opacity: .85;
+}
+
+.aireply-status-dot {
+	width: .55em;
+	height: .55em;
+	border-radius: 50%;
+	background: currentColor;
+	flex: none;
+}
+
+.aireply-status-queued .aireply-status-dot,
+.aireply-status-running .aireply-status-dot {
+	animation: aireply-pulse 1.6s ease-in-out infinite;
+}
+
+.aireply-status-done		{ color: #2a7a3f; }
+.aireply-status-failed		{ color: #a03030; }
+.aireply-status-skipped		{ color: #777; }
+
+.aireply-status a {
+	color: inherit;
+	text-decoration: underline;
+}
+
+@keyframes aireply-pulse {
+	0%, 100%	{ opacity: 1; }
+	50%			{ opacity: .25; }
+}
+
+/* Rispetta la preferenza di sistema per il movimento ridotto: un puntino che
+   pulsa all'infinito è esattamente il tipo di animazione che dà fastidio a chi
+   ha attivato quell'impostazione. */
+@media (prefers-reduced-motion: reduce) {
+	.aireply-status-dot {
+		animation: none;
+	}
+}
+
+/* --- Guida contestuale nell'ACP ---------------------------------- */
+
+.aireply-feedback {
+	margin: .6em 0;
+	padding: .6em .9em;
+	border-left: 3px solid #999;
+	border-radius: 3px;
+	background: rgba(0, 0, 0, .03);
+}
+
+.aireply-feedback.aireply-success	{ border-left-color: #2a7a3f; }
+.aireply-feedback.aireply-error		{ border-left-color: #a03030; }
+.aireply-feedback.aireply-info		{ border-left-color: #2b6cb0; }
+
+.aireply-guide {
+	margin: .8em 0;
+	padding: 1em 1.2em;
+	border: 1px solid rgba(0, 0, 0, .12);
+	border-radius: 4px;
+	background: rgba(0, 0, 0, .02);
+}
+
+.aireply-guide h3 { margin: 0 0 .4em; font-size: 1.1em; }
+.aireply-guide p  { margin: .5em 0; }
+
+.aireply-tag {
+	display: inline-block;
+	padding: .1em .5em;
+	border-radius: 1em;
+	font-size: .75em;
+	font-weight: normal;
+	background: #2a7a3f;
+	color: #fff;
+	vertical-align: middle;
+}
+
+.aireply-note {
+	padding: .5em .8em;
+	border-left: 3px solid #999;
+	border-radius: 3px;
+	background: rgba(0, 0, 0, .03);
+}
+
+.aireply-note.aireply-warning	{ border-left-color: #b8860b; }
+.aireply-note.aireply-error		{ border-left-color: #a03030; }
+.aireply-note.aireply-info		{ border-left-color: #2b6cb0; }
+
+.aireply-error { color: #a03030; }
+
+.aireply-langhint {
+	font-size: .9em;
+	opacity: .8;
+}
+
+/* --- Tabelle ACP -------------------------------------------------- */
+
+.aireply-hint { font-size: .85em; opacity: .7; }
+
+.aireply-category td { background: rgba(0, 0, 0, .05); }
+
+.aireply-triggers label,
+.aireply-limits label {
+	display: block;
+	font-size: .9em;
+	margin: .15em 0;
+}
+
+.aireply-limits input { width: 5.5em; }
+
+.aireply-badge {
+	display: inline-block;
+	padding: .1em .6em;
+	border-radius: 1em;
+	font-size: .85em;
+	background: rgba(0, 0, 0, .06);
+}
+
+.aireply-pre {
+	max-height: 28em;
+	overflow: auto;
+	padding: .8em;
+	border: 1px solid rgba(0, 0, 0, .12);
+	border-radius: 3px;
+	background: rgba(0, 0, 0, .03);
+	font-family: monospace;
+	font-size: .85em;
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+/* --- Pulsanti di riempimento rapido ------------------------------- */
+
+.aireply-presets {
+	margin-top: .4em;
+	font-size: .9em;
+}
+
+.aireply-presets span {
+	margin-right: .4em;
+	opacity: .75;
+}
+
+.aireply-presets input { margin-right: .3em; }
+
+/* Il campo endpoint è un'opzione avanzata: si smorza per non farla
+   sembrare un campo obbligatorio da compilare. */
+.aireply-advanced { opacity: .75; }
+.aireply-advanced:focus-within { opacity: 1; }
+
+/* --- Selezione multipla dei forum --------------------------------- */
+
+#bulk_forums option {
+	padding: .15em .3em;
+	font-family: monospace;
+	white-space: pre;
+}
+
+#bulk_forums option.aireply-assigned {
+	font-weight: bold;
+}
+
+/* Evidenzia il campo dove l'admin deve intervenire dopo un blocco. */
+.aireply-highlight {
+	outline: 2px solid #b8860b;
+	outline-offset: 1px;
+	background: #fffbe6;
+}
+
+.aireply-diag {
+	font-family: monospace;
+	font-size: .85em;
+	opacity: .65;
+}

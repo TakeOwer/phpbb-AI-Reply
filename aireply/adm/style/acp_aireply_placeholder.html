@@ -1,0 +1,33 @@
+<!-- INCLUDE overall_header.html -->
+
+<a id="maincontent"></a>
+
+<h1>{L_ACP_AIREPLY_TITLE}</h1>
+
+<p>{L_AIREPLY_PLACEHOLDER_INTRO}</p>
+
+<fieldset>
+	<legend>{L_AIREPLY_REGISTERED_PROVIDERS}</legend>
+	<table class="table1">
+	<thead>
+		<tr>
+			<th>{L_AIREPLY_PROVIDER}</th>
+			<th>{L_AIREPLY_BASE_URL}</th>
+			<th>{L_AIREPLY_DEFAULT_MODEL}</th>
+			<th>{L_AIREPLY_MODELS_CACHED}</th>
+		</tr>
+	</thead>
+	<tbody>
+	<!-- BEGIN aireply_providers -->
+		<tr>
+			<td><strong>{aireply_providers.NAME}</strong> <span class="small">({aireply_providers.ID})</span></td>
+			<td class="small">{aireply_providers.BASE_URL}</td>
+			<td class="small">{aireply_providers.MODEL}</td>
+			<td>{aireply_providers.CACHED}<!-- IF aireply_providers.CACHE_STALE --> <span class="small">({L_AIREPLY_CACHE_STALE})</span><!-- ENDIF --></td>
+		</tr>
+	<!-- END aireply_providers -->
+	</tbody>
+	</table>
+</fieldset>
+
+<!-- INCLUDE overall_footer.html -->
