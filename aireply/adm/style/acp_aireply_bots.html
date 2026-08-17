@@ -1,0 +1,862 @@
+<!-- INCLUDE overall_header.html -->
+
+<a id="maincontent"></a>
+
+<!-- IF S_NEW_USER -->
+
+	<h1>{L_AIREPLY_NEW_USER}</h1>
+	<p><a href="{U_BACK}">&laquo; {L_BACK}</a></p>
+
+	<p>{L_AIREPLY_NEW_USER_INTRO}</p>
+
+	<form id="aireply_newuser" method="post" action="{U_CREATE_USER}">
+	<fieldset>
+		<legend>{L_AIREPLY_NEW_USER}</legend>
+
+		<dl>
+			<dt><label for="username">{L_USERNAME}</label>
+				<span>{L_AIREPLY_NEW_USER_NAME_EXPLAIN}</span></dt>
+			<dd><input type="text" id="username" name="username" value="{NEWUSER_NAME}" size="30" required></dd>
+		</dl>
+
+		<dl>
+			<dt><label for="email">{L_EMAIL_ADDRESS}</label>
+				<span>{L_AIREPLY_NEW_USER_EMAIL_EXPLAIN}</span></dt>
+			<dd><input type="text" id="email" name="email" value="{NEWUSER_EMAIL}" size="40"></dd>
+		</dl>
+
+		<dl>
+			<dt><label for="group_id">{L_GROUP}</label>
+				<span>{L_AIREPLY_NEW_USER_GROUP_EXPLAIN}</span></dt>
+			<dd>
+				<select id="group_id" name="group_id">
+					<option value="0">{L_AIREPLY_NEW_USER_NO_GROUP}</option>
+					{% for g in groups %}
+						<option value="{{ g.ID }}">{{ g.NAME }}</option>
+					{% endfor %}
+				</select>
+			</dd>
+		</dl>
+
+		<!-- IF MENTION_USEFUL -->
+		<dl>
+			<dt><label for="grant_mention">{L_AIREPLY_GRANT_MENTION}</label>
+				<span>{L_AIREPLY_GRANT_MENTION_EXPLAIN}</span></dt>
+			<dd><label><input type="checkbox" id="grant_mention" name="grant_mention" value="1" checked="checked"> {L_YES}</label></dd>
+		</dl>
+		<!-- ENDIF -->
+
+		<p class="aireply-hint">{L_AIREPLY_NEW_USER_NOTE}</p>
+	</fieldset>
+
+	<fieldset class="quick">
+		<input class="button1" type="submit" name="submit" value="{L_SUBMIT}">
+		<a href="{U_BACK}" class="button2">{L_CANCEL}</a>
+		{S_FORM_TOKEN}
+	</fieldset>
+	</form>
+
+<!-- ELSEIF S_BOT_FORM -->
+
+	<h1><!-- IF S_EDIT -->{L_AIREPLY_EDIT_BOT}<!-- ELSE -->{L_AIREPLY_ADD_BOT}<!-- ENDIF --></h1>
+	<p><a href="{U_BACK}">&laquo; {L_BACK}</a></p>
+
+	<form id="aireply_bot_form" method="post" action="{U_SAVE}">
+
+	<fieldset>
+		<legend>{L_AIREPLY_IDENTITY}</legend>
+		<dl>
+			<dt><label for="bot_username">{L_AIREPLY_BOT_USER}</label>
+				<span>{L_AIREPLY_BOT_USER_EXPLAIN}</span></dt>
+			<dd>
+				<input type="text" id="bot_username" name="bot_username" value="{BOT_USERNAME}" size="30" required>
+				<div class="aireply-hint"><a href="{U_NEW_USER}">{L_AIREPLY_NEW_USER_LINK}</a></div>
+			</dd>
+		</dl>
+		<dl>
+			<dt><label for="bot_name">{L_AIREPLY_BOT_LABEL}</label>
+				<span>{L_AIREPLY_BOT_LABEL_EXPLAIN}</span></dt>
+			<dd><input type="text" id="bot_name" name="bot_name" value="{BOT_NAME}" size="30"></dd>
+		</dl>
+		<dl>
+			<dt><label for="enabled">{L_AIREPLY_BOT_ENABLED}</label></dt>
+			<dd>
+				<label><input type="radio" name="enabled" value="1"<!-- IF BOT_ENABLED --> checked="checked"<!-- ENDIF -->> {L_YES}</label>
+				<label><input type="radio" name="enabled" value="0"<!-- IF not BOT_ENABLED --> checked="checked"<!-- ENDIF -->> {L_NO}</label>
+			</dd>
+		</dl>
+	</fieldset>
+
+	<fieldset>
+		<legend>{L_AIREPLY_PROVIDER}</legend>
+		<dl>
+			<dt><label>{L_AIREPLY_PROVIDER_CHOOSE}</label></dt>
+			<dd>
+				{% for provider in providers %}
+					<label><input type="radio" name="provider" value="{{ provider.ID }}" data-aireply-providerpick{% if provider.SELECTED %} checked="checked"{% endif %}> {{ provider.NAME }}</label>
+				{% endfor %}
+			</dd>
+		</dl>
+	</fieldset>
+
+	{% for provider in providers %}
+	<fieldset data-aireply-provider="{{ provider.ID }}" data-aireply-panel>
+		<legend>{{ provider.NAME }}</legend>
+
+		<dl>
+			<dt><label for="api_key_{{ provider.ID }}">{L_AIREPLY_API_KEY}</label>
+				<span>{L_AIREPLY_API_KEY_EXPLAIN}</span></dt>
+			<dd>
+				{#
+					type="text" e NON type="password", di proposito.
+
+					Chrome e Firefox riempiono da soli i campi password con le
+					credenziali salvate per il sito, ignorando autocomplete="off".
+					Su un campo chiave API il risultato è che al salvataggio
+					finisce in database la password del pannello di
+					amministrazione al posto della chiave, e l'unico sintomo è
+					un "chiave non valida" che arriva molto dopo dall'API.
+
+					Il campo parte sempre vuoto e la chiave salvata non viene
+					mai ristampata, quindi non c'è nulla da nascondere alla
+					vista: il rischio di autofill è concreto, quello di lettura
+					sopra la spalla è trascurabile in confronto.
+				#}
+				<input type="text" id="api_key_{{ provider.ID }}" name="api_key_{{ provider.ID }}"
+					autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+					placeholder="const:AIREPLY_KEY · env:AIREPLY_KEY · sk-… · AIza…" size="52">
+				<div class="aireply-hint">
+					<label><input type="checkbox" name="api_key_force" value="1"> {L_AIREPLY_KEY_FORCE}</label>
+				</div>
+				{% if provider.SELECTED and BOT_KEY_MASKED %}
+					<div class="aireply-hint {% if BOT_KEY_SUSPECT %}aireply-error{% endif %}">
+						{L_AIREPLY_KEY_CURRENT}: <code>{BOT_KEY_MASKED}</code>
+						— {BOT_KEY_SOURCE}, {BOT_KEY_LENGTH} {L_AIREPLY_KEY_CHARS}, {BOT_KEY_FORMAT}
+						{% if BOT_KEY_SUSPECT %}<br><strong>{L_AIREPLY_KEY_SUSPECT}</strong>{% endif %}
+					</div>
+				{% endif %}
+			</dd>
+		</dl>
+
+		<dl>
+			<dt><label for="model_{{ provider.ID }}">{L_AIREPLY_MODEL}</label>
+				<span data-aireply-modelhint>
+					{% if provider.MODEL_COUNT %}
+						{L_AIREPLY_MODELS_CACHED}: {{ provider.MODEL_COUNT }}{% if provider.LAST_CHECK %} · {L_AIREPLY_LAST_CHECK}: {{ provider.LAST_CHECK }}{% endif %}
+						{% if provider.IS_STALE %}<br><strong>{L_AIREPLY_CACHE_STALE_HINT}</strong>{% endif %}
+						{% if provider.NEW_COUNT %}<br><strong>{L_AIREPLY_NEW_MODELS_BADGE}: {{ provider.NEW_COUNT }}</strong>{% endif %}
+					{% else %}
+						{L_AIREPLY_NO_MODELS_YET}
+					{% endif %}
+				</span></dt>
+			<dd>
+				<select id="model_{{ provider.ID }}" name="model_{{ provider.ID }}" data-aireply-model>
+					{% if not provider.MODEL_COUNT %}
+						<option value="{{ provider.DEFAULT_MODEL }}">{{ provider.DEFAULT_MODEL }}</option>
+					{% endif %}
+					{% for model in provider.models %}
+						<option value="{{ model.ID }}"{% if model.SELECTED %} selected="selected"{% endif %}>{% if model.IS_NEW %}★ {% endif %}{% if model.RECOMMENDED %}✓ {% endif %}{{ model.LABEL }}{% if model.REASONING %} · {L_AIREPLY_REASONING_SHORT}{% endif %}{% if not model.PRICE_SET %} · {L_AIREPLY_NO_PRICE_SHORT}{% endif %}</option>
+					{% endfor %}
+				</select>
+				<br>
+				<label class="aireply-hint">
+					{L_AIREPLY_MODEL_MANUAL}
+					<input type="text" name="model_custom_{{ provider.ID }}"
+						value="{% if provider.SELECTED and BOT_MODEL_UNLISTED %}{BOT_MODEL}{% endif %}"
+						placeholder="{{ provider.DEFAULT_MODEL }}" size="34"
+						autocomplete="off" spellcheck="false">
+				</label>
+				<br>
+				<input type="button" class="button2" value="{L_AIREPLY_REFRESH_MODELS}" data-aireply-action="refresh_models">
+				<input type="button" class="button2" value="{L_AIREPLY_TEST_CONNECTION}" data-aireply-action="test">
+				<a href="{{ provider.PRICING_URL }}" target="_blank" rel="noopener">{L_AIREPLY_PRICING_PAGE}</a>
+			</dd>
+		</dl>
+
+		<div class="aireply-feedback" data-aireply-feedback hidden></div>
+		<div class="aireply-guide" data-aireply-guide hidden></div>
+
+		<dl class="aireply-advanced">
+			<dt><label for="base_url_{{ provider.ID }}">{L_AIREPLY_BASE_URL}</label>
+				<span>{L_AIREPLY_BASE_URL_EXPLAIN}</span></dt>
+			<dd><input type="text" id="base_url_{{ provider.ID }}" name="base_url_{{ provider.ID }}"
+				value="{% if provider.SELECTED %}{BOT_BASE_URL}{% endif %}" placeholder="{{ provider.BASE_URL }} — {L_AIREPLY_LEAVE_EMPTY}" size="52"></dd>
+		</dl>
+	</fieldset>
+	{% endfor %}
+
+	<fieldset>
+		<legend>{L_AIREPLY_PERSONA}</legend>
+		<dl>
+			<dt><label for="system_prompt">{L_AIREPLY_SYSTEM_PROMPT}</label>
+				<span>{L_AIREPLY_SYSTEM_PROMPT_EXPLAIN}</span></dt>
+			<dd>
+				<textarea id="system_prompt" name="system_prompt" rows="8" cols="70">{BOT_PROMPT}</textarea>
+
+				<div class="aireply-builder">
+					<p class="aireply-builder-intro">{L_AIREPLY_PB_EXPLAIN}</p>
+
+					<div class="aireply-builder-row">
+						<label for="pb_role"><strong>{L_AIREPLY_PB_ROLE}</strong></label>
+						<select id="pb_role" data-aireply-pb>
+							<option value="free">{L_AIREPLY_PB_ROLE_FREE}</option>
+							<option value="welcome">{L_AIREPLY_PRESET_WELCOME}</option>
+							<option value="support">{L_AIREPLY_PRESET_SUPPORT}</option>
+							<option value="expert">{L_AIREPLY_PRESET_EXPERT}</option>
+							<option value="clarifier">{L_AIREPLY_PB_ROLE_CLARIFIER}</option>
+							<option value="devil">{L_AIREPLY_PB_ROLE_DEVIL}</option>
+							<option value="archivist">{L_AIREPLY_PB_ROLE_ARCHIVIST}</option>
+						</select>
+					</div>
+
+					<div class="aireply-builder-row">
+						<strong>{L_AIREPLY_PB_TRAITS}</strong>
+						<label><input type="checkbox" data-aireply-pb data-trait="friendly"> {L_AIREPLY_PB_TRAIT_FRIENDLY}</label>
+						<label><input type="checkbox" data-aireply-pb data-trait="skeptic"> {L_AIREPLY_PB_TRAIT_SKEPTIC}</label>
+						<label><input type="checkbox" data-aireply-pb data-trait="technical"> {L_AIREPLY_PB_TRAIT_TECHNICAL}</label>
+						<label><input type="checkbox" data-aireply-pb data-trait="concise"> {L_AIREPLY_PB_TRAIT_CONCISE}</label>
+						<label><input type="checkbox" data-aireply-pb data-trait="humble"> {L_AIREPLY_PB_TRAIT_HUMBLE}</label>
+						<label><input type="checkbox" data-aireply-pb data-trait="silent"> {L_AIREPLY_PB_TRAIT_SILENT}</label>
+					</div>
+
+					<input type="hidden" name="persona_recipe" id="persona_recipe" value="{BOT_RECIPE}">
+
+					<div class="aireply-builder-row">
+						<input type="button" class="button2" value="{L_AIREPLY_PB_COMPOSE}" data-aireply-compose>
+						<input type="button" class="button2" value="{L_AIREPLY_PRESET_CLEAR}" data-aireply-clear>
+						<span class="aireply-hint" data-aireply-pb-note hidden></span>
+					</div>
+				</div>
+			</dd>
+		</dl>
+		<dl>
+			<dt><label for="reply_template">{L_AIREPLY_TEMPLATE}</label>
+				<span>{L_AIREPLY_TEMPLATE_EXPLAIN}</span></dt>
+			<dd>
+				<textarea id="reply_template" name="reply_template" rows="4" cols="70">{BOT_TEMPLATE}</textarea>
+				<div class="aireply-presets">
+					<span>{L_AIREPLY_PRESET_FILL}</span>
+					<input type="button" class="button2" value="{L_AIREPLY_TPL_PLAIN}" data-aireply-tpl="plain">
+					<input type="button" class="button2" value="{L_AIREPLY_TPL_QUOTE}" data-aireply-tpl="quote">
+					<input type="button" class="button2" value="{L_AIREPLY_TPL_SIGNED}" data-aireply-tpl="signed">
+				</div>
+			</dd>
+		</dl>
+		<dl>
+			<dt><label for="mention_poster">{L_AIREPLY_MENTION_POSTER}</label>
+				<span>{L_AIREPLY_MENTION_POSTER_EXPLAIN}</span></dt>
+			<dd>
+				<label><input type="radio" name="mention_poster" value="1"<!-- IF BOT_MENTION --> checked="checked"<!-- ENDIF -->> {L_YES}</label>
+				<label><input type="radio" name="mention_poster" value="0"<!-- IF not BOT_MENTION --> checked="checked"<!-- ENDIF -->> {L_NO}</label>
+			</dd>
+			<dd class="aireply-hint">
+				{MENTION_STATUS}
+				<br><a href="{U_DETECT_MENTIONS}">{L_AIREPLY_MENTION_REDETECT}</a>
+			</dd>
+		</dl>
+
+		<dl>
+			<dt><label for="board_context">{L_AIREPLY_BOARD_CONTEXT}</label>
+				<span>{L_AIREPLY_BOARD_CONTEXT_EXPLAIN}</span></dt>
+			<dd>
+				<label><input type="radio" name="board_context" value="1"<!-- IF BOT_BOARD_CTX --> checked="checked"<!-- ENDIF -->> {L_YES}</label>
+				<label><input type="radio" name="board_context" value="0"<!-- IF not BOT_BOARD_CTX --> checked="checked"<!-- ENDIF -->> {L_NO}</label>
+			</dd>
+			{#
+				Interruttore fatto in casa invece di <details>.
+
+				Il tag nativo dovrebbe funzionare ovunque, ma dentro l'ACP di
+				phpBB non si apriva. Piuttosto che inseguire quale regola di
+				stile o quale script lo intercetta, si usa lo stesso meccanismo
+				del resto di questa pagina: un pulsante e un blocco nascosto,
+				che sappiamo funzionare.
+			#}
+			<dd>
+				<input type="button" class="button2" value="{L_AIREPLY_BOARD_CONTEXT_PREVIEW}" data-aireply-ctxtoggle>
+			</dd>
+			<dd data-aireply-ctxbox hidden>
+				<!-- IF BOARD_CTX_PREVIEW -->
+					<pre class="aireply-pre">{BOARD_CTX_PREVIEW}</pre>
+				<!-- ELSE -->
+					<p class="aireply-note aireply-warning">{L_AIREPLY_BOARD_CONTEXT_EMPTY}</p>
+				<!-- ENDIF -->
+			</dd>
+		</dl>
+
+		<dl>
+			<dt><label for="reply_language">{L_AIREPLY_REPLY_LANGUAGE}</label>
+				<span>{L_AIREPLY_REPLY_LANGUAGE_EXPLAIN}</span></dt>
+			<dd>
+				<select id="reply_language" name="reply_language" data-aireply-langmode>
+					<option value="auto"<!-- IF BOT_LANG_MODE == 'auto' --> selected="selected"<!-- ENDIF -->>{L_AIREPLY_LANG_AUTO}</option>
+					<option value="board"<!-- IF BOT_LANG_MODE == 'board' --> selected="selected"<!-- ENDIF -->>{L_AIREPLY_LANG_BOARD}</option>
+					<option value="custom"<!-- IF BOT_LANG_MODE == 'custom' --> selected="selected"<!-- ENDIF -->>{L_AIREPLY_LANG_CUSTOM}</option>
+				</select>
+			</dd>
+			<dd class="aireply-langhint" data-aireply-langhint></dd>
+			<dd data-aireply-langcustom hidden>
+				<input type="text" name="reply_language_custom" value="{BOT_LANG_CUSTOM}"
+					placeholder="italiano · English (UK) · espanol" size="30">
+			</dd>
+		</dl>
+	</fieldset>
+
+	<fieldset>
+		<legend>{L_AIREPLY_TUNING}</legend>
+		<dl>
+			<dt><label for="context_posts">{L_AIREPLY_CONTEXT_POSTS}</label>
+				<span>{L_AIREPLY_CONTEXT_POSTS_EXPLAIN}</span></dt>
+			<dd><input type="number" id="context_posts" name="context_posts" value="{BOT_CTX_POSTS}" min="0" max="200"></dd>
+		</dl>
+		<dl>
+			<dt><label for="context_max_chars">{L_AIREPLY_CONTEXT_MAX_CHARS}</label>
+				<span>{L_AIREPLY_CONTEXT_MAX_CHARS_EXPLAIN}</span></dt>
+			<dd><input type="number" id="context_max_chars" name="context_max_chars" value="{BOT_CTX_CHARS}" min="0" step="1" data-aireply-recalc></dd>
+		</dl>
+		<dl>
+			<dt><label for="max_output_tokens">{L_AIREPLY_MAX_OUTPUT}</label>
+				<span>{L_AIREPLY_MAX_OUTPUT_EXPLAIN}</span></dt>
+			<dd><input type="number" id="max_output_tokens" name="max_output_tokens" value="{BOT_MAX_OUTPUT}" min="50" step="1" data-aireply-recalc></dd>
+		</dl>
+		<dl>
+			<dt><label for="max_post_chars">{L_AIREPLY_MAX_POST_CHARS}</label>
+				<span>{L_AIREPLY_MAX_POST_CHARS_EXPLAIN}</span></dt>
+			<dd><input type="number" id="max_post_chars" name="max_post_chars" value="{BOT_MAX_POST}" min="200" step="1"></dd>
+		</dl>
+		<dl>
+			<dt><label for="temperature">{L_AIREPLY_TEMPERATURE}</label>
+				<span>{L_AIREPLY_TEMPERATURE_EXPLAIN}</span></dt>
+			<dd><input type="number" id="temperature" name="temperature" value="{BOT_TEMPERATURE}" min="0" max="2" step="0.1"></dd>
+		</dl>
+		<dl>
+			<dt><label for="thinking_budget">{L_AIREPLY_THINKING_BUDGET}</label>
+				<span>{L_AIREPLY_THINKING_BUDGET_EXPLAIN}</span></dt>
+			<dd><input type="number" id="thinking_budget" name="thinking_budget" value="{BOT_THINKING}" min="-1"></dd>
+		</dl>
+		<dl>
+			<dt><label for="request_timeout">{L_AIREPLY_TIMEOUT}</label>
+				<span>{L_AIREPLY_TIMEOUT_EXPLAIN}</span></dt>
+			<dd><input type="number" id="request_timeout" name="request_timeout" value="{BOT_TIMEOUT}" min="10" max="300" step="10"></dd>
+		</dl>
+		<!-- Il tetto giornaliero vive nella scheda Forum: serve solo alla stima di spesa. -->
+		<input type="hidden" id="daily_cap" name="daily_cap_preview" value="30">
+	</fieldset>
+
+	<fieldset class="quick">
+		<input class="button1" type="submit" name="submit" value="{L_SUBMIT}">
+		<a href="{U_BACK}" class="button2">{L_CANCEL}</a>
+		{S_FORM_TOKEN}
+	</fieldset>
+
+	<p class="aireply-hint">{L_AIREPLY_VERSION_LABEL}: {AIREPLY_VERSION}</p>
+
+	</form>
+
+	<script>
+	(function () {
+		'use strict';
+
+		// URL non codificato per HTML: {U_SAVE} contiene "&amp;", che dentro
+		// uno <script> resta letterale e trasformerebbe "mode" in "amp;mode".
+		var ACTION = '{U_AJAX}';
+		var HASH = '{AIREPLY_HASH}';
+		var BOT_ID = '{BOT_ID}';
+
+		var LANG = {
+			working: '{LA_AIREPLY_JS_WORKING}', failed: '{LA_AIREPLY_JS_FAILED}',
+			limits: '{LA_AIREPLY_JS_LIMITS}', price: '{LA_AIREPLY_JS_PRICE}',
+			estimate: '{LA_AIREPLY_JS_ESTIMATE}', perReply: '{LA_AIREPLY_JS_PER_REPLY}',
+			perDay: '{LA_AIREPLY_JS_PER_DAY}', perMonth: '{LA_AIREPLY_JS_PER_MONTH}',
+			quota: '{LA_AIREPLY_JS_QUOTA}', spentMonth: '{LA_AIREPLY_JS_SPENT_MONTH}',
+			rateLimit: '{LA_AIREPLY_JS_RATE_LIMIT}', noSnapshot: '{LA_AIREPLY_JS_NO_SNAPSHOT}',
+			quotaErrors: '{LA_AIREPLY_JS_QUOTA_ERRORS}', tokens: '{LA_AIREPLY_JS_TOKENS}',
+			unknown: '{LA_AIREPLY_JS_UNKNOWN}', recommended: '{LA_AIREPLY_JS_RECOMMENDED}',
+			badResponse: '{LA_AIREPLY_JS_BAD_RESPONSE}',
+			modelsCached: '{LA_AIREPLY_MODELS_CACHED}:'
+		};
+
+		/*
+		 * Il costruttore di personalità.
+		 *
+		 * Un ruolo di base più dei tratti che si sommano, invece di preset che
+		 * si sostituiscono. È la differenza fra "scegli una delle tre
+		 * personalità che ho previsto io" e "descrivi la tua": le stesse tre
+		 * categorie chieste sull'forum — amichevole, scettica, tecnica —
+		 * diventano combinabili anziché alternative.
+		 */
+		var PB_ROLES = {
+			free:      '',
+			welcome:   '{LA_AIREPLY_PRESET_WELCOME_PROMPT}',
+			support:   '{LA_AIREPLY_PRESET_SUPPORT_PROMPT}',
+			expert:    '{LA_AIREPLY_PRESET_EXPERT_PROMPT}',
+			clarifier: '{LA_AIREPLY_PB_ROLE_CLARIFIER_TEXT}',
+			devil:     '{LA_AIREPLY_PB_ROLE_DEVIL_TEXT}',
+			archivist: '{LA_AIREPLY_PB_ROLE_ARCHIVIST_TEXT}'
+		};
+
+		var PB_TRAITS = {
+			friendly:  '{LA_AIREPLY_PB_TRAIT_FRIENDLY_TEXT}',
+			skeptic:   '{LA_AIREPLY_PB_TRAIT_SKEPTIC_TEXT}',
+			technical: '{LA_AIREPLY_PB_TRAIT_TECHNICAL_TEXT}',
+			concise:   '{LA_AIREPLY_PB_TRAIT_CONCISE_TEXT}',
+			humble:    '{LA_AIREPLY_PB_TRAIT_HUMBLE_TEXT}',
+			silent:    '{LA_AIREPLY_PB_TRAIT_SILENT_TEXT}'
+		};
+
+		var PB_EDITED_NOTE = '{LA_AIREPLY_PB_EDITED}';
+
+		// Ultimo testo generato da qui. Serve a distinguere un prompt che
+		// nessuno ha toccato da uno riscritto a mano dall'amministratore.
+		var pbLastComposed = null;
+
+		function pbCompose() {
+			var role = document.getElementById('pb_role');
+			var parts = [];
+
+			if (role && PB_ROLES[role.value]) {
+				parts.push(PB_ROLES[role.value]);
+			}
+
+			var traits = [];
+
+			document.querySelectorAll('[data-trait]').forEach(function (box) {
+				if (box.checked && PB_TRAITS[box.getAttribute('data-trait')]) {
+					traits.push(PB_TRAITS[box.getAttribute('data-trait')]);
+				}
+			});
+
+			/*
+			 * Un tratto per riga, non tutti di seguito.
+			 *
+			 * Uniti da spazi diventavano un paragrafo unico, faticoso da rileggere
+			 * e da correggere. Una riga per istruzione si scorre con l'occhio, e
+			 * per il modello e' altrettanto chiara se non di piu'.
+			 */
+			if (traits.length) { parts.push(traits.join('\n')); }
+
+			return parts.join('\n\n');
+		}
+
+		// Ricetta corrente, nella forma "ruolo|tratto1,tratto2".
+		function pbRecipe() {
+			var role = document.getElementById('pb_role');
+			var traits = [];
+
+			document.querySelectorAll('[data-trait]').forEach(function (box) {
+				if (box.checked) { traits.push(box.getAttribute('data-trait')); }
+			});
+
+			return (role ? role.value : '') + '|' + traits.join(',');
+		}
+
+		function pbStoreRecipe() {
+			var field = document.getElementById('persona_recipe');
+			if (field) { field.value = pbRecipe(); }
+		}
+
+		/*
+		 * Ripristina ruolo e tratti da una ricetta salvata.
+		 *
+		 * Il prompt resta la fonte di verita' — e' quello che viene inviato al
+		 * modello — ma senza ricordare come e' stato composto, riaprendo il bot
+		 * le caselle risultano vuote e non si sa piu' da dove si era partiti.
+		 */
+		function pbRestore() {
+			var field = document.getElementById('persona_recipe');
+			if (!field || !field.value) { return false; }
+
+			var parts = field.value.split('|');
+			var role = document.getElementById('pb_role');
+
+			if (role && parts[0]) {
+				var esiste = Array.prototype.some.call(role.options, function (o) { return o.value === parts[0]; });
+				if (esiste) { role.value = parts[0]; }
+			}
+
+			var wanted = (parts[1] || '').split(',').filter(Boolean);
+
+			document.querySelectorAll('[data-trait]').forEach(function (box) {
+				box.checked = (wanted.indexOf(box.getAttribute('data-trait')) !== -1);
+			});
+
+			return true;
+		}
+
+		function pbApply(force) {
+			var area = document.getElementById('system_prompt');
+			var note = document.querySelector('[data-aireply-pb-note]');
+			if (!area) { return; }
+
+			var current = area.value.trim();
+			var touched = (current !== '' && pbLastComposed !== null && current !== pbLastComposed.trim());
+			var neverComposed = (current !== '' && pbLastComposed === null);
+
+			/*
+			 * Non si sovrascrive mai un testo scritto a mano senza chiederlo.
+			 *
+			 * Un amministratore che ha passato dieci minuti a rifinire il prompt
+			 * e lo vede sparire per aver spuntato una casella non tocca più
+			 * quelle caselle. Il pulsante "Componi" resta la via esplicita.
+			 */
+			if (!force && (touched || neverComposed)) {
+				if (note) {
+					note.hidden = false;
+					note.textContent = PB_EDITED_NOTE;
+				}
+				return;
+			}
+
+			var composed = pbCompose();
+			area.value = composed;
+			pbLastComposed = composed;
+			pbStoreRecipe();
+
+			if (note) { note.hidden = true; }
+		}
+
+		// I template non sono testo tradotto ma codice BBCode: restano qui.
+		var TEMPLATES = {
+			plain:  '{response}\n\n{disclosure}',
+			quote:  '[quote]{response}[/quote]\n{disclosure}',
+			signed: '{response}\n\n[size=85][i]— {model}[/i][/size]\n{disclosure}'
+		};
+
+		var LANG_HINTS = {
+			auto: '{LA_AIREPLY_LANG_AUTO_EXPLAIN}',
+			board: '{LA_AIREPLY_LANG_BOARD_EXPLAIN}',
+			custom: '{LA_AIREPLY_LANG_CUSTOM_EXPLAIN}'
+		};
+
+		function esc(v) { var d = document.createElement('div'); d.textContent = (v === null || v === undefined) ? '' : String(v); return d.innerHTML; }
+
+		// Riga di diagnostica in coda a ogni esito: codice interno, stato HTTP
+		// e versione dell'estensione. Serve a distinguere "il problema è ancora
+		// lì" da "i file non sono stati sostituiti", che dall'esterno si
+		// assomigliano moltissimo.
+		function diag(d) {
+			var bits = [];
+			if (d.diagnostic) { bits.push(d.diagnostic); }
+			if (d.version) { bits.push('v' + d.version); }
+			return bits.length ? '<br><span class="aireply-diag">[' + esc(bits.join(' · ')) + ']</span>' : '';
+		}
+
+		function post(params) {
+			var body = new URLSearchParams();
+			body.append('hash', HASH);
+			body.append('bot_id', BOT_ID);
+			Object.keys(params).forEach(function (k) { body.append(k, params[k]); });
+
+			return fetch(ACTION, {
+				method: 'POST', credentials: 'same-origin',
+				headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+				body: body.toString()
+			}).then(function (r) {
+				// Si legge come testo e si prova a interpretare: se il server
+				// ha risposto con una pagina HTML di errore invece che con
+				// JSON, mostrarne l'inizio è enormemente più utile di un
+				// generico "richiesta non riuscita".
+				return r.text().then(function (text) {
+					try {
+						return JSON.parse(text);
+					} catch (e) {
+						return {
+							success: false,
+							message: LANG.badResponse + ' (HTTP ' + r.status + ') ' +
+								esc(text.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 220))
+						};
+					}
+				});
+			});
+		}
+
+		function tuning() {
+			return {
+				context_max_chars: document.getElementById('context_max_chars').value || 0,
+				max_output_tokens: document.getElementById('max_output_tokens').value || 0,
+				daily_cap: document.getElementById('daily_cap').value || 0
+			};
+		}
+
+		function panelFor(el) { return el.closest('[data-aireply-provider]'); }
+
+		function feedback(fs, text, kind) {
+			var box = fs.querySelector('[data-aireply-feedback]');
+			box.hidden = false;
+			box.className = 'aireply-feedback aireply-' + (kind || 'info');
+			box.innerHTML = text;
+		}
+
+		function renderGuide(fs, d) {
+			var box = fs.querySelector('[data-aireply-guide]'), h = [];
+			h.push('<h3>' + esc(d.title) + (d.recommended ? ' <span class="aireply-tag">' + LANG.recommended + '</span>' : '') + '</h3>');
+			h.push('<p>' + esc(d.summary) + '</p>');
+			h.push('<p><strong>' + LANG.limits + '</strong> ' + (d.limits.input ? esc(d.limits.input) + ' / ' + esc(d.limits.output) + ' ' + LANG.tokens : LANG.unknown) + '</p>');
+			if (d.price) { h.push('<p><strong>' + LANG.price + '</strong> ' + esc(d.price.in_fmt) + ' → ' + esc(d.price.out_fmt) + ' / 1M</p>'); }
+			if (d.estimate.known) {
+				h.push('<p><strong>' + LANG.estimate + '</strong><br>' + LANG.perReply + ' ' + esc(d.estimate.reply) +
+					' (' + esc(d.estimate.tokens_in) + ' + ' + esc(d.estimate.tokens_out) + ' ' + LANG.tokens + ')<br>' +
+					LANG.perDay + ' ' + esc(d.estimate.day) + '<br>' + LANG.perMonth + ' ' + esc(d.estimate.month) + '</p>');
+			}
+			var q = d.quota;
+			h.push('<p><strong>' + LANG.quota + '</strong><br>' + LANG.spentMonth + ' ' + esc(q.spent_month) +
+				' (' + esc(q.tokens_month) + ' ' + LANG.tokens + ')' + (q.budget ? ' / ' + esc(q.budget) + ' — ' + esc(q.budget_pct) + '%' : '') + '<br>' +
+				LANG.rateLimit + ' ' + (q.has_snapshot ? esc((q.rate_limit.remaining_requests || '?') + ' req, ' + (q.rate_limit.remaining_tokens || '?') + ' tok') : LANG.noSnapshot) +
+				(q.quota_errors > 0 ? '<br><span class="aireply-error">' + LANG.quotaErrors + ' ' + esc(q.quota_errors) + '</span>' : '') + '</p>');
+			h.push('<p class="small">' + esc(q.disclaimer) + '</p>');
+			(d.notes || []).forEach(function (n) { h.push('<p class="aireply-note aireply-' + esc(n.level) + '">' + n.text + '</p>'); });
+			box.hidden = false;
+			box.innerHTML = h.join('');
+		}
+
+		function loadGuide(fs) {
+			if (fs.hidden) { return; }
+			var select = fs.querySelector('[data-aireply-model]');
+			if (!select || !select.value) { return; }
+			var p = tuning();
+			p.aireply_ajax = 'model_info';
+			p.provider = fs.getAttribute('data-aireply-provider');
+			p.model = select.value;
+			post(p).then(function (d) { if (d.success) { renderGuide(fs, d); } }).catch(function () {});
+		}
+
+		function refreshModels(fs) {
+			feedback(fs, LANG.working, 'info');
+			post({
+				aireply_ajax: 'refresh_models',
+				provider: fs.getAttribute('data-aireply-provider'),
+				api_key: fs.querySelector('input[name^=api_key_]').value,
+				base_url: fs.querySelector('input[name^=base_url_]').value
+			}).then(function (d) {
+				if (!d.success) {
+					// Un blocco per metodo non è un errore fatale: la chiave
+					// può funzionare, manca solo l'elenco. Va segnalato in modo
+					// diverso da un vero fallimento, e va indicata la via d'uscita.
+					var kind = d.blocked ? 'info' : 'error';
+					var text = esc(d.message)
+						+ (d.extra ? '<br>' + d.extra : '')
+						+ (d.hint ? '<br>' + d.hint : '')
+						+ diag(d);
+					feedback(fs, text, kind);
+
+					if (d.blocked) {
+						var manual = fs.querySelector('input[name^=model_custom_]');
+						if (manual) {
+							manual.classList.add('aireply-highlight');
+							manual.focus();
+						}
+					}
+					return;
+				}
+				var select = fs.querySelector('[data-aireply-model]'), previous = select.value;
+				select.innerHTML = '';
+				(d.models || []).forEach(function (m) {
+					var o = document.createElement('option');
+					o.value = m.id;
+					o.textContent = (m.is_new ? '★ ' : '') + (m.recommended ? '✓ ' : '') + m.label;
+					select.appendChild(o);
+				});
+				if (previous) { select.value = previous; }
+
+				// La scritta "nessun modello in cache" è generata lato server:
+				// senza questo aggiornamento resterebbe lì a contraddire il
+				// menù appena popolato, finché non si ricarica la pagina.
+				var hint = fs.querySelector('[data-aireply-modelhint]');
+				if (hint) { hint.textContent = LANG.modelsCached + ' ' + (d.models || []).length; }
+
+				feedback(fs, esc(d.message), 'success');
+				loadGuide(fs);
+			}).catch(function () { feedback(fs, LANG.failed, 'error'); });
+		}
+
+		function testConnection(fs) {
+			feedback(fs, LANG.working, 'info');
+			var select = fs.querySelector('[data-aireply-model]');
+			post({
+				aireply_ajax: 'test',
+				provider: fs.getAttribute('data-aireply-provider'),
+				api_key: fs.querySelector('input[name^=api_key_]').value,
+				base_url: fs.querySelector('input[name^=base_url_]').value,
+				model: select ? select.value : ''
+			}).then(function (d) {
+				feedback(fs,
+					esc(d.message) + (d.warning ? '<br>' + d.warning : '') + diag(d),
+					d.success ? 'success' : 'error');
+				// (il campo warning contiene HTML dal file di lingua: non va escapato)
+			}).catch(function () { feedback(fs, LANG.failed, 'error'); });
+		}
+
+		// Mostra solo il pannello del provider selezionato: due pannelli
+		// visibili insieme confondono su quale chiave si sta modificando.
+		function syncProviderPanels() {
+			var picked = document.querySelector('[data-aireply-providerpick]:checked');
+			var value = picked ? picked.value : '';
+			document.querySelectorAll('[data-aireply-panel]').forEach(function (fs) {
+				fs.hidden = (fs.getAttribute('data-aireply-provider') !== value);
+			});
+			var active = document.querySelector('[data-aireply-panel]:not([hidden])');
+			if (active) { loadGuide(active); }
+		}
+
+		function syncLanguageMode() {
+			var select = document.querySelector('[data-aireply-langmode]');
+			if (!select) { return; }
+			document.querySelector('[data-aireply-langcustom]').hidden = (select.value !== 'custom');
+			document.querySelector('[data-aireply-langhint]').textContent = LANG_HINTS[select.value] || '';
+		}
+
+		document.addEventListener('click', function (e) {
+			if (!e.target.getAttribute) { return; }
+
+			if (e.target.hasAttribute('data-aireply-ctxtoggle')) {
+				var box = document.querySelector('[data-aireply-ctxbox]');
+				if (box) { box.hidden = !box.hidden; }
+				return;
+			}
+
+			if (e.target.hasAttribute('data-aireply-compose')) {
+				pbApply(true);
+				return;
+			}
+
+			if (e.target.hasAttribute('data-aireply-clear')) {
+				document.getElementById('system_prompt').value = '';
+				pbLastComposed = '';
+
+				var role = document.getElementById('pb_role');
+				if (role) { role.value = 'free'; }
+
+				document.querySelectorAll('[data-trait]').forEach(function (box) { box.checked = false; });
+				pbStoreRecipe();
+				var n = document.querySelector('[data-aireply-pb-note]');
+				if (n) { n.hidden = true; }
+				return;
+			}
+
+			var tpl = e.target.getAttribute('data-aireply-tpl');
+			if (tpl !== null) {
+				document.getElementById('reply_template').value = TEMPLATES[tpl] || '';
+				return;
+			}
+
+			var a = e.target.getAttribute('data-aireply-action');
+			if (!a) { return; }
+			var fs = panelFor(e.target);
+			if (!fs) { return; }
+			if (a === 'refresh_models') { refreshModels(fs); }
+			if (a === 'test') { testConnection(fs); }
+		});
+
+		document.addEventListener('change', function (e) {
+			if (!e.target.hasAttribute) { return; }
+			if (e.target.hasAttribute('data-aireply-pb')) { pbApply(false); }
+			if (e.target.hasAttribute('data-aireply-providerpick')) { syncProviderPanels(); }
+			if (e.target.hasAttribute('data-aireply-langmode')) { syncLanguageMode(); }
+			if (e.target.hasAttribute('data-aireply-model')) { loadGuide(panelFor(e.target)); }
+			if (e.target.hasAttribute('data-aireply-recalc')) {
+				var active = document.querySelector('[data-aireply-panel]:not([hidden])');
+				if (active) { loadGuide(active); }
+			}
+		});
+
+		/*
+		 * All'apertura si ripristinano le scelte salvate e si confronta il
+		 * risultato con il prompt in archivio.
+		 *
+		 * Se combaciano, il prompt e' quello generato dal costruttore e
+		 * spuntare una casella puo' ricomporlo senza chiedere nulla. Se
+		 * differiscono, l'amministratore l'ha rifinito a mano e pbApply() si
+		 * rifiutera' di sovrascriverlo senza una richiesta esplicita.
+		 */
+		if (pbRestore()) {
+			var areaIniziale = document.getElementById('system_prompt');
+
+			if (areaIniziale && areaIniziale.value.trim() === pbCompose().trim()) {
+				pbLastComposed = areaIniziale.value;
+			}
+		}
+
+		syncLanguageMode();
+		syncProviderPanels();
+	})();
+	</script>
+
+<!-- ELSE -->
+
+	<h1>{L_ACP_AIREPLY_BOTS}</h1>
+	<p>{L_AIREPLY_BOTS_INTRO}</p>
+
+	<!-- IF not AIREPLY_GLOBAL_ON -->
+		<div class="errorbox"><h3>{L_WARNING}</h3><p>{L_AIREPLY_WARN_GLOBAL_OFF}</p></div>
+	<!-- ENDIF -->
+
+	<fieldset>
+		<legend>{L_AIREPLY_USAGE_SUMMARY}</legend>
+		<dl><dt><label>{L_AIREPLY_USAGE_TODAY}</label></dt>
+			<dd>{AIREPLY_TODAY_JOBS} {L_AIREPLY_REPLIES} · {AIREPLY_TODAY_TOKENS} token · {AIREPLY_TODAY_COST}</dd></dl>
+		<dl><dt><label>{L_AIREPLY_USAGE_MONTH}</label></dt>
+			<dd>{AIREPLY_MONTH_JOBS} {L_AIREPLY_REPLIES} · {AIREPLY_MONTH_TOKENS} token · {AIREPLY_MONTH_COST}
+			<!-- IF not AIREPLY_COST_KNOWN --><br><span class="aireply-error">{L_AIREPLY_COST_PARTIAL}: {AIREPLY_UNPRICED}</span><!-- ENDIF -->
+			</dd></dl>
+		<p class="small">{L_AIREPLY_QUOTA_DISCLAIMER}</p>
+	</fieldset>
+
+	<table class="table1">
+	<thead>
+		<tr>
+			<th>{L_AIREPLY_COL_BOT}</th>
+			<th>{L_AIREPLY_COL_PERSONA}</th>
+			<th>{L_AIREPLY_COL_USER}</th>
+			<th>{L_AIREPLY_PROVIDER}</th>
+			<th>{L_AIREPLY_COL_KEY}</th>
+			<th>{L_AIREPLY_COL_FORUMS}</th>
+			<th>{L_AIREPLY_COL_PERMS}</th>
+			<th>{L_AIREPLY_COL_STATUS}</th>
+			<th>{L_ACTION}</th>
+		</tr>
+	</thead>
+	<tbody>
+	{% for bot in bots %}
+		<tr>
+			<td><strong>{{ bot.NAME }}</strong></td>
+			<td class="small aireply-persona">
+				{% if bot.PERSONA %}{{ bot.PERSONA }}{% else %}<span class="aireply-hint">{L_AIREPLY_NO_PERSONA}</span>{% endif %}
+			</td>
+			<td>{% if bot.USER_MISSING %}<span class="aireply-error">{L_AIREPLY_USER_MISSING}</span>{% else %}{{ bot.USERNAME }}{% endif %}</td>
+			<td class="small">{{ bot.PROVIDER }}<div class="aireply-hint">{{ bot.MODEL }}</div></td>
+			<td class="small">{% if bot.KEY_OK %}{{ bot.KEY_SOURCE }}{% else %}<span class="aireply-error">{L_AIREPLY_KEY_MISSING}</span>{% endif %}</td>
+			<td>{% if bot.FORUM_COUNT %}{{ bot.FORUM_COUNT }}{% else %}<span class="aireply-error">0</span>{% endif %}</td>
+			<td class="small">
+				{% if bot.PERMS_OK %}
+					✓
+				{% else %}
+					<span class="aireply-error">
+						{% if bot.PERMS_NO_MENTION %}{L_AIREPLY_PERMS_MISSING_MENTION}<br>{% endif %}
+						{% if bot.PERMS_FORUMS %}{L_AIREPLY_PERMS_MISSING_FORUMS} ({{ bot.PERMS_FORUMS }}){% endif %}
+					</span>
+					<br><a href="{{ bot.U_FIXPERMS }}">{L_AIREPLY_PERMS_FIX}</a>
+				{% endif %}
+			</td>
+			<td>{% if bot.ENABLED %}{L_YES}{% else %}{L_NO}{% endif %}</td>
+			<td class="small">
+				<a href="{{ bot.U_EDIT }}">{L_EDIT}</a> |
+				<a href="{{ bot.U_TOGGLE }}">{% if bot.ENABLED %}{L_DISABLE}{% else %}{L_ENABLE}{% endif %}</a> |
+				<a href="{{ bot.U_DELETE }}">{L_DELETE}</a>
+			</td>
+		</tr>
+	{% endfor %}
+	{% if not AIREPLY_BOT_COUNT %}
+		<tr><td colspan="9">{L_AIREPLY_NO_BOTS_YET}</td></tr>
+	{% endif %}
+	</tbody>
+	</table>
+
+	<fieldset class="quick">
+		<a href="{U_ADD_BOT}" class="button1">{L_AIREPLY_ADD_BOT}</a>
+		<a href="{U_NEW_USER}" class="button2">{L_AIREPLY_NEW_USER}</a>
+	</fieldset>
+
+	<p class="aireply-hint">{L_AIREPLY_VERSION_LABEL}: {AIREPLY_VERSION}</p>
+
+<!-- ENDIF -->
+
+<!-- INCLUDE overall_footer.html -->

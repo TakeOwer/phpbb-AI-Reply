@@ -1,0 +1,265 @@
+imports:
+    - { resource: tables.yml }
+
+services:
+
+    # ------------------------------------------------------------------
+    # Livello provider (fase 3)
+    # ------------------------------------------------------------------
+
+    salvocortesiano.aireply.http_client:
+        class: salvocortesiano\aireply\provider\http_client
+
+    salvocortesiano.aireply.key_manager:
+        class: salvocortesiano\aireply\provider\key_manager
+
+    # I provider si auto-registrano con il tag: il manager non li conosce per nome.
+    # Aggiungere un provider = una classe nuova + un blocco come questi.
+    salvocortesiano.aireply.provider.openai:
+        class: salvocortesiano\aireply\provider\openai_provider
+        arguments:
+            - '@salvocortesiano.aireply.http_client'
+            - '@language'
+        tags:
+            - { name: aireply.provider }
+
+    salvocortesiano.aireply.provider.gemini:
+        class: salvocortesiano\aireply\provider\gemini_provider
+        arguments:
+            - '@salvocortesiano.aireply.http_client'
+            - '@language'
+        tags:
+            - { name: aireply.provider }
+
+    salvocortesiano.aireply.provider_collection:
+        class: phpbb\di\service_collection
+        arguments:
+            - '@service_container'
+        tags:
+            - { name: service_collection, tag: aireply.provider }
+
+    salvocortesiano.aireply.model_profile:
+        class: salvocortesiano\aireply\provider\model_profile
+
+    salvocortesiano.aireply.provider_manager:
+        class: salvocortesiano\aireply\provider\manager
+        arguments:
+            - '@salvocortesiano.aireply.provider_collection'
+            - '@dbal.conn'
+            - '@config'
+            - '@config_text'
+            - '@language'
+            - '@salvocortesiano.aireply.key_manager'
+            - '@salvocortesiano.aireply.model_profile'
+            - '%salvocortesiano.aireply.tables.models%'
+
+    salvocortesiano.aireply.usage_tracker:
+        class: salvocortesiano\aireply\usage\usage_tracker
+        arguments:
+            - '@dbal.conn'
+            - '@config'
+            - '@salvocortesiano.aireply.provider_manager'
+            - '@salvocortesiano.aireply.model_profile'
+            - '%salvocortesiano.aireply.tables.jobs%'
+            - '%salvocortesiano.aireply.tables.bots%'
+
+    salvocortesiano.aireply.acp_controller:
+        class: salvocortesiano\aireply\controller\acp_controller
+        arguments:
+            - '@config'
+            - '@dbal.conn'
+            - '@language'
+            - '@log'
+            - '@request'
+            - '@template'
+            - '@user'
+            - '@salvocortesiano.aireply.provider_manager'
+            - '@salvocortesiano.aireply.key_manager'
+            - '@salvocortesiano.aireply.usage_tracker'
+            - '@salvocortesiano.aireply.mention_formatter'
+            - '@salvocortesiano.aireply.board_context'
+            - '@salvocortesiano.aireply.user_creator'
+            - '@salvocortesiano.aireply.permission_manager'
+            - '%salvocortesiano.aireply.tables.bots%'
+            - '%salvocortesiano.aireply.tables.forums%'
+            - '%salvocortesiano.aireply.tables.jobs%'
+
+    # ------------------------------------------------------------------
+    # Contenuto
+    # ------------------------------------------------------------------
+
+    salvocortesiano.aireply.text_extractor:
+        class: salvocortesiano\aireply\content\text_extractor
+        arguments:
+            - '@text_formatter.utils'
+
+    salvocortesiano.aireply.markdown:
+        class: salvocortesiano\aireply\content\markdown_to_bbcode
+
+    salvocortesiano.aireply.board_context:
+        class: salvocortesiano\aireply\content\board_context
+        arguments:
+            - '@config'
+            - '@dbal.conn'
+            - '@language'
+
+    salvocortesiano.aireply.mention_formatter:
+        class: salvocortesiano\aireply\content\mention_formatter
+        arguments:
+            - '@config'
+            - '@dbal.conn'
+            - '@ext.manager'
+            - '@text_formatter.parser'
+            - '@user'
+            - '%core.php_ext%'
+
+    # ------------------------------------------------------------------
+    # Bot e coda
+    # ------------------------------------------------------------------
+
+    salvocortesiano.aireply.user_creator:
+        class: salvocortesiano\aireply\bot\user_creator
+        arguments:
+            - '@config'
+            - '@dbal.conn'
+            - '@language'
+            - '@passwords.manager'
+            - '@user'
+            - '%core.root_path%'
+            - '%core.php_ext%'
+
+    salvocortesiano.aireply.permission_manager:
+        class: salvocortesiano\aireply\bot\permission_manager
+        arguments:
+            - '@dbal.conn'
+            - '%core.root_path%'
+            - '%core.php_ext%'
+
+    salvocortesiano.aireply.bot_repository:
+        class: salvocortesiano\aireply\bot\bot_repository
+        arguments:
+            - '@dbal.conn'
+            - '%salvocortesiano.aireply.tables.bots%'
+            - '%salvocortesiano.aireply.tables.forums%'
+
+    salvocortesiano.aireply.job_queue:
+        class: salvocortesiano\aireply\queue\job_queue
+        arguments:
+            - '@dbal.conn'
+            - '@language'
+            - '%salvocortesiano.aireply.tables.jobs%'
+
+    salvocortesiano.aireply.gatekeeper:
+        class: salvocortesiano\aireply\queue\gatekeeper
+        arguments:
+            - '@config'
+            - '@auth'
+            - '@language'
+            - '@salvocortesiano.aireply.job_queue'
+            - '@salvocortesiano.aireply.bot_repository'
+
+    salvocortesiano.aireply.post_status:
+        class: salvocortesiano\aireply\status\post_status
+        arguments:
+            - '@dbal.conn'
+
+    # ------------------------------------------------------------------
+    # Worker
+    # ------------------------------------------------------------------
+
+    salvocortesiano.aireply.context_builder:
+        class: salvocortesiano\aireply\worker\context_builder
+        arguments:
+            - '@dbal.conn'
+            - '@salvocortesiano.aireply.text_extractor'
+            - '@language'
+
+    salvocortesiano.aireply.publisher:
+        class: salvocortesiano\aireply\worker\publisher
+        arguments:
+            - '@dbal.conn'
+            - '@user'
+            - '@auth'
+            - '@language'
+            - '@salvocortesiano.aireply.mention_formatter'
+            - '%core.root_path%'
+            - '%core.php_ext%'
+
+    salvocortesiano.aireply.job_worker:
+        class: salvocortesiano\aireply\worker\job_worker
+        arguments:
+            - '@config'
+            - '@language'
+            - '@salvocortesiano.aireply.job_queue'
+            - '@salvocortesiano.aireply.gatekeeper'
+            - '@salvocortesiano.aireply.bot_repository'
+            - '@salvocortesiano.aireply.provider_manager'
+            - '@salvocortesiano.aireply.key_manager'
+            - '@salvocortesiano.aireply.context_builder'
+            - '@salvocortesiano.aireply.publisher'
+            - '@salvocortesiano.aireply.markdown'
+            - '@salvocortesiano.aireply.mention_formatter'
+            - '@salvocortesiano.aireply.board_context'
+            - '@salvocortesiano.aireply.text_extractor'
+            - '@salvocortesiano.aireply.post_status'
+
+    # ------------------------------------------------------------------
+    # Eventi
+    # ------------------------------------------------------------------
+
+    salvocortesiano.aireply.listener:
+        class: salvocortesiano\aireply\event\listener
+        arguments:
+            - '@user'
+            - '@auth'
+            - '@config'
+            - '@language'
+            - '@controller.helper'
+            - '@template'
+            - '@salvocortesiano.aireply.bot_repository'
+            - '@salvocortesiano.aireply.job_queue'
+            - '@salvocortesiano.aireply.gatekeeper'
+            - '@salvocortesiano.aireply.text_extractor'
+            - '@salvocortesiano.aireply.post_status'
+        tags:
+            - { name: event.listener }
+
+    # ------------------------------------------------------------------
+    # Cron
+    # ------------------------------------------------------------------
+
+    salvocortesiano.aireply.cron.process_queue:
+        class: salvocortesiano\aireply\cron\task\process_queue
+        arguments:
+            - '@config'
+            - '@salvocortesiano.aireply.job_queue'
+            - '@salvocortesiano.aireply.job_worker'
+        calls:
+            - [set_name, [salvocortesiano.aireply.cron.process_queue]]
+        tags:
+            - { name: cron.task }
+
+    salvocortesiano.aireply.cron.prune_jobs:
+        class: salvocortesiano\aireply\cron\task\prune_jobs
+        arguments:
+            - '@config'
+            - '@salvocortesiano.aireply.job_queue'
+        calls:
+            - [set_name, [salvocortesiano.aireply.cron.prune_jobs]]
+        tags:
+            - { name: cron.task }
+
+    # ------------------------------------------------------------------
+    # Console
+    # ------------------------------------------------------------------
+
+    salvocortesiano.aireply.command.process:
+        class: salvocortesiano\aireply\console\command\process
+        arguments:
+            - '@user'
+            - '@config'
+            - '@language'
+            - '@salvocortesiano.aireply.job_queue'
+            - '@salvocortesiano.aireply.job_worker'
+        tags:
+            - { name: console.command }

@@ -1,0 +1,89 @@
+<!-- INCLUDE overall_header.html -->
+
+<a id="maincontent"></a>
+
+<h1>{L_ACP_AIREPLY_SETTINGS}</h1>
+
+<p>{L_AIREPLY_SETTINGS_INTRO}</p>
+
+<form id="aireply_settings" method="post" action="{U_ACTION}">
+
+<fieldset>
+	<legend>{L_AIREPLY_MASTER_SWITCH}</legend>
+	<dl>
+		<dt><label for="aireply_enabled">{L_AIREPLY_ENABLED}</label>
+			<span>{L_AIREPLY_ENABLED_EXPLAIN}</span></dt>
+		<dd>
+			<label><input type="radio" name="aireply_enabled" value="1"<!-- IF AIREPLY_ENABLED --> checked="checked"<!-- ENDIF -->> {L_YES}</label>
+			<label><input type="radio" name="aireply_enabled" value="0"<!-- IF not AIREPLY_ENABLED --> checked="checked"<!-- ENDIF -->> {L_NO}</label>
+		</dd>
+	</dl>
+</fieldset>
+
+<fieldset>
+	<legend>{L_AIREPLY_QUEUE_SETTINGS}</legend>
+	<dl>
+		<dt><label for="aireply_batch_size">{L_AIREPLY_BATCH_SIZE}</label>
+			<span>{L_AIREPLY_BATCH_SIZE_EXPLAIN}</span></dt>
+		<dd><input type="number" id="aireply_batch_size" name="aireply_batch_size" value="{AIREPLY_BATCH}" min="1" max="20"></dd>
+	</dl>
+	<dl>
+		<dt><label for="aireply_max_bots_per_post">{L_AIREPLY_MAX_BOTS_PER_POST}</label>
+			<span>{L_AIREPLY_MAX_BOTS_PER_POST_EXPLAIN}</span></dt>
+		<dd><input type="number" id="aireply_max_bots_per_post" name="aireply_max_bots_per_post" value="{AIREPLY_MAX_BOTS}" min="0" max="10"></dd>
+	</dl>
+	<dl>
+		<dt><label for="aireply_cron_interval">{L_AIREPLY_CRON_INTERVAL}</label>
+			<span>{L_AIREPLY_CRON_INTERVAL_EXPLAIN}</span></dt>
+		<dd><input type="number" id="aireply_cron_interval" name="aireply_cron_interval" value="{AIREPLY_INTERVAL}" min="30" step="30"></dd>
+	</dl>
+	<dl>
+		<dt><label>{L_AIREPLY_CRON_LAST_RUN}</label>
+			<span>{L_AIREPLY_CRON_LAST_RUN_EXPLAIN}</span></dt>
+		<dd><strong>{AIREPLY_CRON_LAST}</strong></dd>
+	</dl>
+</fieldset>
+
+<fieldset>
+	<legend>{L_AIREPLY_DIAGNOSTICS}</legend>
+	<dl>
+		<dt><label for="aireply_verbose_log">{L_AIREPLY_VERBOSE_LOG}</label>
+			<span>{L_AIREPLY_VERBOSE_LOG_EXPLAIN}</span></dt>
+		<dd>
+			<label><input type="radio" name="aireply_verbose_log" value="1"<!-- IF AIREPLY_VERBOSE --> checked="checked"<!-- ENDIF -->> {L_YES}</label>
+			<label><input type="radio" name="aireply_verbose_log" value="0"<!-- IF not AIREPLY_VERBOSE --> checked="checked"<!-- ENDIF -->> {L_NO}</label>
+		</dd>
+	</dl>
+	<dl>
+		<dt><label for="aireply_job_retention_days">{L_AIREPLY_RETENTION}</label>
+			<span>{L_AIREPLY_RETENTION_EXPLAIN}</span></dt>
+		<dd><input type="number" id="aireply_job_retention_days" name="aireply_job_retention_days" value="{AIREPLY_RETENTION}" min="0"></dd>
+	</dl>
+</fieldset>
+
+<fieldset>
+	<legend>{L_AIREPLY_BUDGET_SETTINGS}</legend>
+	<dl>
+		<dt><label for="aireply_monthly_budget">{L_AIREPLY_MONTHLY_BUDGET}</label>
+			<span>{L_AIREPLY_MONTHLY_BUDGET_EXPLAIN}</span></dt>
+		<dd><input type="number" id="aireply_monthly_budget" name="aireply_monthly_budget" value="{AIREPLY_BUDGET_RAW}" min="0" step="0.01"></dd>
+	</dl>
+	<dl>
+		<dt><label for="aireply_currency">{L_AIREPLY_CURRENCY}</label></dt>
+		<dd><input type="text" id="aireply_currency" name="aireply_currency" value="{AIREPLY_CURRENCY}" size="6" maxlength="6"></dd>
+	</dl>
+	<dl>
+		<dt><label>{L_AIREPLY_SPENT_SO_FAR}</label></dt>
+		<dd><strong>{AIREPLY_SPENT}</strong> <!-- IF AIREPLY_BUDGET_PCT -->({AIREPLY_BUDGET_PCT}%)<!-- ENDIF --></dd>
+	</dl>
+	<p class="small">{L_AIREPLY_QUOTA_DISCLAIMER}</p>
+</fieldset>
+
+<fieldset class="quick">
+	<input class="button1" type="submit" name="submit" value="{L_SUBMIT}">
+	{S_FORM_TOKEN}
+</fieldset>
+
+</form>
+
+<!-- INCLUDE overall_footer.html -->
