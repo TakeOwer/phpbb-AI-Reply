@@ -1,0 +1,12 @@
+{% if postrow.AIREPLY_STATUS %}
+	{% for aireply in postrow.AIREPLY_STATUS %}
+	<div class="aireply-status aireply-status-{{ aireply.STATUS }}">
+		<span class="aireply-status-dot" aria-hidden="true"></span>
+		{% if aireply.U_REPLY %}
+			<a href="{{ aireply.U_REPLY }}">{{ aireply.TEXT }}</a>
+		{% else %}
+			<span>{{ aireply.TEXT }}</span>
+		{% endif %}
+	</div>
+	{% endfor %}
+{% endif %}

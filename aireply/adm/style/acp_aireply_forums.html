@@ -1,0 +1,222 @@
+<!-- INCLUDE overall_header.html -->
+
+<a id="maincontent"></a>
+
+<h1>{L_ACP_AIREPLY_FORUMS}</h1>
+
+<p>{L_AIREPLY_FORUMS_INTRO}</p>
+
+<!-- IF not AIREPLY_GLOBAL_ON -->
+	<div class="errorbox"><h3>{L_WARNING}</h3><p>{L_AIREPLY_WARN_GLOBAL_OFF}</p></div>
+<!-- ENDIF -->
+
+<!-- IF S_NO_BOTS -->
+	<div class="errorbox">
+		<h3>{L_AIREPLY_NO_BOTS_TITLE}</h3>
+		<p>{L_AIREPLY_NO_BOTS_EXPLAIN}</p>
+	</div>
+<!-- ELSE -->
+
+<p class="aireply-hint">{L_AIREPLY_FORUMS_FOUND}</p>
+
+<!-- IF AIREPLY_NOTICE -->
+	<div class="successbox"><h3>{L_INFORMATION}</h3><p>{AIREPLY_NOTICE}</p></div>
+<!-- ENDIF -->
+
+<form id="aireply_bulk" method="post" action="{U_ACTION}">
+<fieldset>
+	<legend>{L_AIREPLY_BULK_TITLE}</legend>
+	<p>{L_AIREPLY_BULK_EXPLAIN}</p>
+
+	<dl>
+		<dt><label for="bulk_forums">{L_AIREPLY_BULK_FORUMS}</label>
+			<span>{L_AIREPLY_BULK_FORUMS_EXPLAIN}</span></dt>
+		<dd>
+			<select id="bulk_forums" name="bulk_forums[]" multiple="multiple" size="12" style="min-width:24em">
+			{% for f in bulk_forums %}
+				<option value="{{ f.ID }}"{% if f.ASSIGNED %} class="aireply-assigned"{% endif %}{% if f.SELECTED %} selected="selected"{% endif %}>{{ f.NAME }}{% if f.ASSIGNED %} •{% endif %}</option>
+			{% endfor %}
+			</select>
+		</dd>
+		<dd>
+			<input type="button" class="button2" value="{L_AIREPLY_SELECT_ALL}" data-aireply-select="all">
+			<input type="button" class="button2" value="{L_AIREPLY_SELECT_NONE}" data-aireply-select="none">
+			<input type="button" class="button2" value="{L_AIREPLY_SELECT_UNASSIGNED}" data-aireply-select="unassigned">
+		</dd>
+	</dl>
+
+	<dl>
+		<dt><label for="bulk_bot">{L_AIREPLY_ASSIGNED_BOT}</label>
+			<span>{L_AIREPLY_BULK_BOT_EXPLAIN}</span></dt>
+		<dd>
+			<select id="bulk_bot" name="bulk_bot">
+				<option value="-1">{L_AIREPLY_BULK_CHOOSE}</option>
+				{% for b in bulk_bots %}
+					<option value="{{ b.ID }}"{% if b.SELECTED %} selected="selected"{% endif %}>{{ b.NAME }}</option>
+				{% endfor %}
+				<option value="0">{L_AIREPLY_BULK_REMOVE}</option>
+			</select>
+		</dd>
+	</dl>
+
+	<dl>
+		<dt><label for="bulk_replace">{L_AIREPLY_BULK_MODE}</label>
+			<span>{L_AIREPLY_BULK_MODE_EXPLAIN}</span></dt>
+		<dd>
+			<label><input type="radio" name="bulk_replace" value="0" checked="checked"> {L_AIREPLY_BULK_MODE_ADD}</label>
+			<label><input type="radio" name="bulk_replace" value="1"> {L_AIREPLY_BULK_MODE_REPLACE}</label>
+		</dd>
+	</dl>
+
+	<dl>
+		<dt><label>{L_AIREPLY_TRIGGERS}</label></dt>
+		<dd class="aireply-triggers">
+			<label><input type="checkbox" name="bulk_on_new_topic" value="1"<!-- IF BULK_ON_TOPIC --> checked="checked"<!-- ENDIF -->> {L_AIREPLY_TRIGGER_TOPIC}</label>
+			<label><input type="checkbox" name="bulk_on_reply" value="1"<!-- IF BULK_ON_REPLY --> checked="checked"<!-- ENDIF -->> {L_AIREPLY_TRIGGER_REPLY}</label>
+			<label><input type="checkbox" name="bulk_on_mention" value="1"<!-- IF BULK_ON_MENTION --> checked="checked"<!-- ENDIF -->> {L_AIREPLY_TRIGGER_MENTION}</label>
+		</dd>
+	</dl>
+
+	<dl>
+		<dt><label>{L_AIREPLY_LIMITS}</label></dt>
+		<dd class="aireply-limits">
+			<label>{L_AIREPLY_DELAY_SHORT} <input type="number" name="bulk_delay" value="{BULK_DELAY}" min="0" step="10"></label>
+			<label>{L_AIREPLY_CAP_SHORT} <input type="number" name="bulk_cap" value="{BULK_CAP}" min="0" step="5"></label>
+			<label>{L_AIREPLY_COOLDOWN_SHORT} <input type="number" name="bulk_cooldown" value="{BULK_COOLDOWN}" min="0" step="30"></label>
+		</dd>
+	</dl>
+
+	<p class="quick">
+		<input class="button1" type="submit" name="bulk_submit" value="{L_AIREPLY_BULK_APPLY}"
+			data-aireply-confirm="{L_AIREPLY_CONFIRM_BULK_REMOVE}">
+	</p>
+	{S_FORM_TOKEN}
+</fieldset>
+</form>
+
+<script>
+(function () {
+	'use strict';
+	var list = document.getElementById('bulk_forums');
+	if (!list) { return; }
+
+	// «Rimuovi assegnazione» è distruttivo: si chiede conferma.
+	var applyBtn = document.querySelector('[data-aireply-confirm]');
+	var botSelect = document.getElementById('bulk_bot');
+
+	if (applyBtn && botSelect) {
+		applyBtn.form.addEventListener('submit', function (e) {
+			if (botSelect.value === '0' && !window.confirm(applyBtn.getAttribute('data-aireply-confirm'))) {
+				e.preventDefault();
+			}
+		});
+	}
+
+	document.addEventListener('click', function (e) {
+		var mode = e.target.getAttribute && e.target.getAttribute('data-aireply-select');
+		if (!mode) { return; }
+
+		Array.prototype.forEach.call(list.options, function (o) {
+			if (mode === 'all')   { o.selected = true; }
+			if (mode === 'none')  { o.selected = false; }
+			// "Non assegnati": i forum già configurati portano la classe.
+			if (mode === 'unassigned') { o.selected = !o.classList.contains('aireply-assigned'); }
+		});
+	});
+})();
+</script>
+
+<form id="aireply_forums" method="post" action="{U_ACTION}">
+
+<table class="table1">
+<thead>
+	<tr>
+		<th style="width:26%">{L_FORUM}</th>
+		<th style="width:22%">{L_AIREPLY_ASSIGNED_BOT}</th>
+		<th style="width:24%">{L_AIREPLY_TRIGGERS}</th>
+		<th style="width:22%">{L_AIREPLY_LIMITS}</th>
+		<th style="width:6%">{L_REMOVE}</th>
+	</tr>
+</thead>
+<tbody>
+{% for forum in forums %}
+	{% if forum.IS_CATEGORY %}
+	<tr class="aireply-category">
+		<td colspan="5" style="padding-left: {{ forum.INDENT * 20 }}px;"><strong>{{ forum.NAME }}</strong></td>
+	</tr>
+	{% else %}
+
+	{# Riga del forum: intestazione, con l'avviso sui costi se più bot
+	   rispondono in automatico allo stesso messaggio. #}
+	<tr class="aireply-forumrow">
+		<td style="padding-left: {{ forum.INDENT * 20 }}px;">
+			<strong>{{ forum.NAME }}</strong>
+			<div class="aireply-hint">ID {{ forum.FORUM_ID }}</div>
+			{% if forum.WARN_MULTI %}
+				<div class="aireply-note aireply-warning">{L_AIREPLY_WARN_MULTI_AUTO}</div>
+			{% endif %}
+		</td>
+		<td colspan="4">
+			{% if not forum.BOT_COUNT %}
+				<span class="aireply-hint">{L_AIREPLY_NO_BOT_HERE}</span>
+			{% endif %}
+			{% if forum.addable %}
+				<select name="add_bot[{{ forum.FORUM_ID }}]">
+					<option value="0">{L_AIREPLY_ADD_BOT_HERE}</option>
+					{% for b in forum.addable %}
+						<option value="{{ b.ID }}">{{ b.NAME }}</option>
+					{% endfor %}
+				</select>
+			{% endif %}
+		</td>
+	</tr>
+
+	{# Una riga per ogni bot assegnato, con i propri innesco e limiti. #}
+	{% for bot in forum.assigned %}
+	<tr class="aireply-botrow">
+		<td></td>
+		<td>
+			↳ {{ bot.NAME }}
+			<input type="hidden" name="known[{{ forum.FORUM_ID }}][]" value="{{ bot.BOT_ID }}">
+		</td>
+		<td class="aireply-triggers">
+			<label><input type="checkbox" name="on_new_topic[{{ forum.FORUM_ID }}][{{ bot.BOT_ID }}]" value="1"{% if bot.ON_NEW_TOPIC %} checked="checked"{% endif %}> {L_AIREPLY_TRIGGER_TOPIC}</label>
+			<label><input type="checkbox" name="on_reply[{{ forum.FORUM_ID }}][{{ bot.BOT_ID }}]" value="1"{% if bot.ON_REPLY %} checked="checked"{% endif %}> {L_AIREPLY_TRIGGER_REPLY}</label>
+			<label><input type="checkbox" name="on_mention[{{ forum.FORUM_ID }}][{{ bot.BOT_ID }}]" value="1"{% if bot.ON_MENTION %} checked="checked"{% endif %}> {L_AIREPLY_TRIGGER_MENTION}</label>
+		</td>
+		<td class="aireply-limits">
+			<label>{L_AIREPLY_DELAY_SHORT} <input type="number" name="delay[{{ forum.FORUM_ID }}][{{ bot.BOT_ID }}]" value="{{ bot.DELAY }}" min="0" step="1" size="5"></label>
+			<label>{L_AIREPLY_CAP_SHORT} <input type="number" name="cap[{{ forum.FORUM_ID }}][{{ bot.BOT_ID }}]" value="{{ bot.DAILY_CAP }}" min="0" step="1" size="5"></label>
+			<label>{L_AIREPLY_COOLDOWN_SHORT} <input type="number" name="cooldown[{{ forum.FORUM_ID }}][{{ bot.BOT_ID }}]" value="{{ bot.COOLDOWN }}" min="0" step="1" size="5"></label>
+		</td>
+		<td style="text-align:center">
+			<label><input type="checkbox" name="remove[{{ forum.FORUM_ID }}][{{ bot.BOT_ID }}]" value="1" title="{L_REMOVE}"></label>
+		</td>
+	</tr>
+	{% endfor %}
+
+	{% endif %}
+{% endfor %}
+</tbody>
+</table>
+
+<fieldset class="quick">
+	<input class="button1" type="submit" name="submit" value="{L_SUBMIT}">
+	{S_FORM_TOKEN}
+</fieldset>
+
+</form>
+
+<fieldset>
+	<legend>{L_AIREPLY_TRIGGER_HELP_TITLE}</legend>
+	<dl><dt><label>{L_AIREPLY_TRIGGER_TOPIC}</label></dt><dd>{L_AIREPLY_TRIGGER_TOPIC_EXPLAIN}</dd></dl>
+	<dl><dt><label>{L_AIREPLY_TRIGGER_REPLY}</label></dt><dd>{L_AIREPLY_TRIGGER_REPLY_EXPLAIN}</dd></dl>
+	<dl><dt><label>{L_AIREPLY_TRIGGER_MENTION}</label></dt><dd>{L_AIREPLY_TRIGGER_MENTION_EXPLAIN}</dd></dl>
+	<dl><dt><label>{L_AIREPLY_DELAY_SHORT}</label></dt><dd>{L_AIREPLY_DELAY_EXPLAIN}</dd></dl>
+	<dl><dt><label>{L_AIREPLY_CAP_SHORT}</label></dt><dd>{L_AIREPLY_CAP_EXPLAIN}</dd></dl>
+	<dl><dt><label>{L_AIREPLY_COOLDOWN_SHORT}</label></dt><dd>{L_AIREPLY_COOLDOWN_EXPLAIN}</dd></dl>
+</fieldset>
+
+<!-- ENDIF -->
+
+<!-- INCLUDE overall_footer.html -->
