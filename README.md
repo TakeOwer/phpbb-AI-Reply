@@ -40,7 +40,7 @@ in which section, and with what character is up to you — forum by forum.
 | **The bot is** | an ordinary phpBB user, with avatar, rank and profile |
 | **Processing** | asynchronous through a queue; the poster never waits |
 | **Languages** | English and Italian, complete |
-| **Version** | 1.0.2-dev |
+| **Version** | 1.0.8-dev |
 
 ---
 
