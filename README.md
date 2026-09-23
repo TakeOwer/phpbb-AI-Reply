@@ -5,9 +5,10 @@ actually read what they wrote. Someone asks a technical question in the support
 section, and gets a first answer while waiting for a human one. Which AI replies,
 in which section, and with what character is up to you — forum by forum.
 
-[![phpBB](https://img.shields.io/badge/phpBB-3.3%2B-blue)](https://www.phpbb.com/)
-[![PHP](https://img.shields.io/badge/PHP-7.4%2B-777bb4)](https://www.php.net/)
-[![License](https://img.shields.io/badge/license-GPL--2.0--only-green)](LICENSE)
+![Version](https://img.shields.io/badge/version-1.0.10-105080)
+![phpBB](https://img.shields.io/badge/phpBB-3.3.x-377a33)
+![PHP](https://img.shields.io/badge/PHP-%3E%3D7.4-377a33)
+![License](https://img.shields.io/badge/license-GPL--2.0--only-7f7f7f)
 
 🇬🇧 English · [🇮🇹 Italiano](README.it.md)
 
