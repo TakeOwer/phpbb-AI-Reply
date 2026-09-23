@@ -1,5 +1,0 @@
-parameters:
-    salvocortesiano.aireply.tables.bots: '%core.table_prefix%aireply_bots'
-    salvocortesiano.aireply.tables.forums: '%core.table_prefix%aireply_forums'
-    salvocortesiano.aireply.tables.jobs: '%core.table_prefix%aireply_jobs'
-    salvocortesiano.aireply.tables.models: '%core.table_prefix%aireply_models'
