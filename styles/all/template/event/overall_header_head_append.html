@@ -1,0 +1,16 @@
+{#
+	INCLUDECSS risolve il percorso da solo, risalendo ai temi genitori.
+
+	Prima il collegamento usava {T_THEME_PATH}, che punta alla cartella del tema
+	ATTIVO: con un tema diverso da prosilver il browser cercava
+	ext/salvocortesiano/aireply/styles/<nometema>/theme/aireply.css, un file che
+	non esiste. Il foglio di stile non veniva mai caricato e il badge compariva
+	come testo semplice, senza riquadro ne' animazione.
+
+	I template evento funzionavano lo stesso perche' per quelli phpBB risale ai
+	temi genitori. Per i file statici collegati a mano, no.
+
+	La sintassi @vendor_estensione e' la stessa usata dalle estensioni che
+	funzionano su qualunque stile installato.
+#}
+{% INCLUDECSS '@salvocortesiano_aireply/aireply.css' %}

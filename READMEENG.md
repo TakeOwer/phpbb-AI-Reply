@@ -9,7 +9,7 @@ in which section, and with what character is up to you — forum by forum.
 
 [![phpBB](https://img.shields.io/badge/phpBB-3.3%2B-blue)](https://www.phpbb.com/)
 [![PHP](https://img.shields.io/badge/PHP-7.4%2B-777bb4)](https://www.php.net/)
-[![License](https://img.shields.io/badge/license-GPL--2.0--only-green)](license.txt)
+[![License](https://img.shields.io/badge/license-GPL--2.0--only-green)](LICENSE)
 
 🇬🇧 English · [🇮🇹 Italiano](README.it.md)
 
@@ -21,7 +21,6 @@ in which section, and with what character is up to you — forum by forum.
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Configuration](#configuration)
-- [Getting your API keys](docs/api-keys.md) 🔗
 - [Features](#features)
 - [How it works](#how-it-works)
 - [Security](#security)
@@ -83,11 +82,6 @@ to reply in the forums where you will use it.
 > configuration and explains why.
 
 ### 2. Put the API key in `config.php`
-
-> **Don't have a key yet, or is one being rejected?** See
-> **[Getting your API keys](docs/api-keys.md)** — it covers obtaining a key from
-> both providers and, more usefully, the restriction traps that produce error
-> messages pointing in the wrong direction.
 
 At the bottom of the board's `config.php`:
 
@@ -186,52 +180,6 @@ It includes the warnings that otherwise cost you an afternoon:
 - **Temperature not supported** on some models, and omitted automatically
 - **Context larger than the model's window**, with the figure in tokens
 
-### Several personalities in one forum
-
-A forum can host more than one bot, each with its own phpBB user, its own system
-prompt and its own triggers. Users choose which one to address by mentioning it
-by name.
-
-The recommended setup:
-
-| Bot | Triggers | Role |
-|---|---|---|
-| Main bot | New topics + Mentions | greets and answers by default |
-| Extra personalities | **Mentions only** | reply only when called |
-
-A clickable list of the forum's available bots appears above the editor, so nobody
-has to remember their names.
-
-> **Watch the cost.** If several bots share a non-mention trigger, one message
-> produces several replies and several API calls. *General settings* has a cap on
-> how many bots may reply automatically to the same message, set to 1 by default.
-> Explicit mentions are never capped: somebody who calls three bots by name expects
-> three answers.
-
-Bots never reply to each other. Two personalities with the *Replies* trigger in the
-same topic would answer each other indefinitely, at your expense.
-
-### Mentioning the author
-
-When the model writes the name of the person it is replying to, that name becomes a
-mention. Nothing is added if the model does not use it: forcing "@Name" in front
-would give every reply the same mechanical opening.
-
-The mention format is not hardcoded. AI Reply asks the parser what it accepts, so
-it works with **Simple mentions** by paul999 in either of its formats — the
-`[smention]` tag of version 2.0 and the older `[mention]` — and falls back to plain
-`@Name` when no mention extension is installed. The detection cache invalidates
-itself when that extension is enabled or disabled.
-
-Two requirements for notifications to be sent:
-
-- **Simple mentions** must be enabled
-- the **bot's user** needs the `u_can_mention` permission — not you, the bot
-
-The ACP tells you which of these is missing. See
-[Adapting mention detection](docs/adapting-mention-detection.md) if your board
-stores mentions in another format.
-
 ### Conversation memory
 
 The bot can read earlier messages in the topic, from 0 (no memory) up to 200. Two
@@ -243,14 +191,6 @@ caps work together:
 The second exists because fifty short posts and fifty long posts cost very
 differently, and the model bills tokens, not messages. When the cap bites, the
 oldest posts are dropped and the log records how many.
-
-### Mentions
-
-The bot answers when called by name. Detection covers the formats used by the most
-common mention extensions, matching by user ID where available so that renames and
-similar usernames cannot confuse it. If your board stores mentions in a format that
-is not recognised, see
-[Adapting mention detection](docs/adapting-mention-detection.md).
 
 ### Reply language
 
@@ -378,10 +318,6 @@ taken.
 The **Activity log** tab holds the full diagnostics of every request. It is the
 first place to look.
 
-For anything involving keys, restrictions or provider errors, see
-**[Getting your API keys](docs/api-keys.md)**, which has an error reference for
-both providers.
-
 ---
 
 ## Known limitations
@@ -390,10 +326,10 @@ Listed for honesty, not because they are unfixable.
 
 - **Prices must be entered by hand.** See the note on quotas: hardcoding them would
   mean showing wrong figures with an air of authority.
+- **One bot per forum in the interface.** The database schema supports more; the
+  configuration tab exposes one.
 - **Quoting the bot does not count as a mention.** If a forum has only the
   *Mentions* trigger enabled, a user who quote-replies to the bot gets no answer.
-- **No automated test suite.** Every part was verified during development, but
-  nothing runs on its own.
 - **The notice language** is the board default at the time of publishing, not the
   reader's: the text is stored in the post.
 - **Development version.** Not yet submitted to the phpBB Extensions team for
@@ -406,7 +342,7 @@ Listed for honesty, not because they are unfixable.
 Copyright © 2026 **Salvo Cortesiano**
 
 Distributed under the **GNU General Public License version 2** (GPL-2.0-only).
-See the [license.txt](license.txt) file.
+See the [LICENSE](LICENSE) file.
 
 The overall architecture — bot as a real phpBB user, job queue, status shown under
 the post, publishing through `submit_post()` with a temporary user switch — is
