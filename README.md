@@ -1,15 +1,15 @@
-# AI Reply
+# phpbb-AI-Reply
 
-**AI-generated replies in selected phpBB forums.**
-
+AI-generated replies in selected phpBB forums
 Someone posts an introduction, and a bot welcomes them with a message that shows it
 actually read what they wrote. Someone asks a technical question in the support
 section, and gets a first answer while waiting for a human one. Which AI replies,
 in which section, and with what character is up to you — forum by forum.
 
-[![phpBB](https://img.shields.io/badge/phpBB-3.3%2B-blue)](https://www.phpbb.com/)
-[![PHP](https://img.shields.io/badge/PHP-7.4%2B-777bb4)](https://www.php.net/)
-[![License](https://img.shields.io/badge/license-GPL--2.0--only-green)](license.txt)
+![Version](https://img.shields.io/badge/version-1.0.10-105080)
+![phpBB](https://img.shields.io/badge/phpBB-3.3.x-377a33)
+![PHP](https://img.shields.io/badge/PHP-%3E%3D7.4-377a33)
+![License](https://img.shields.io/badge/license-GPL--2.0--only-7f7f7f)
 
 🇬🇧 English · [🇮🇹 Italiano](README.it.md)
 
@@ -21,7 +21,6 @@ in which section, and with what character is up to you — forum by forum.
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Configuration](#configuration)
-- [Getting your API keys](docs/api-keys.md) 🔗
 - [Features](#features)
 - [How it works](#how-it-works)
 - [Security](#security)
@@ -43,7 +42,7 @@ in which section, and with what character is up to you — forum by forum.
 | **The bot is** | an ordinary phpBB user, with avatar, rank and profile |
 | **Processing** | asynchronous through a queue; the poster never waits |
 | **Languages** | English and Italian, complete |
-| **Version** | 1.0.2-dev |
+| **Version** | 1.0.8-dev |
 
 ---
 
@@ -83,11 +82,6 @@ to reply in the forums where you will use it.
 > configuration and explains why.
 
 ### 2. Put the API key in `config.php`
-
-> **Don't have a key yet, or is one being rejected?** See
-> **[Getting your API keys](docs/api-keys.md)** — it covers obtaining a key from
-> both providers and, more usefully, the restriction traps that produce error
-> messages pointing in the wrong direction.
 
 At the bottom of the board's `config.php`:
 
@@ -186,52 +180,6 @@ It includes the warnings that otherwise cost you an afternoon:
 - **Temperature not supported** on some models, and omitted automatically
 - **Context larger than the model's window**, with the figure in tokens
 
-### Several personalities in one forum
-
-A forum can host more than one bot, each with its own phpBB user, its own system
-prompt and its own triggers. Users choose which one to address by mentioning it
-by name.
-
-The recommended setup:
-
-| Bot | Triggers | Role |
-|---|---|---|
-| Main bot | New topics + Mentions | greets and answers by default |
-| Extra personalities | **Mentions only** | reply only when called |
-
-A clickable list of the forum's available bots appears above the editor, so nobody
-has to remember their names.
-
-> **Watch the cost.** If several bots share a non-mention trigger, one message
-> produces several replies and several API calls. *General settings* has a cap on
-> how many bots may reply automatically to the same message, set to 1 by default.
-> Explicit mentions are never capped: somebody who calls three bots by name expects
-> three answers.
-
-Bots never reply to each other. Two personalities with the *Replies* trigger in the
-same topic would answer each other indefinitely, at your expense.
-
-### Mentioning the author
-
-When the model writes the name of the person it is replying to, that name becomes a
-mention. Nothing is added if the model does not use it: forcing "@Name" in front
-would give every reply the same mechanical opening.
-
-The mention format is not hardcoded. AI Reply asks the parser what it accepts, so
-it works with **Simple mentions** by paul999 in either of its formats — the
-`[smention]` tag of version 2.0 and the older `[mention]` — and falls back to plain
-`@Name` when no mention extension is installed. The detection cache invalidates
-itself when that extension is enabled or disabled.
-
-Two requirements for notifications to be sent:
-
-- **Simple mentions** must be enabled
-- the **bot's user** needs the `u_can_mention` permission — not you, the bot
-
-The ACP tells you which of these is missing. See
-[Adapting mention detection](docs/adapting-mention-detection.md) if your board
-stores mentions in another format.
-
 ### Conversation memory
 
 The bot can read earlier messages in the topic, from 0 (no memory) up to 200. Two
@@ -243,14 +191,6 @@ caps work together:
 The second exists because fifty short posts and fifty long posts cost very
 differently, and the model bills tokens, not messages. When the cap bites, the
 oldest posts are dropped and the log records how many.
-
-### Mentions
-
-The bot answers when called by name. Detection covers the formats used by the most
-common mention extensions, matching by user ID where available so that renames and
-similar usernames cannot confuse it. If your board stores mentions in a format that
-is not recognised, see
-[Adapting mention detection](docs/adapting-mention-detection.md).
 
 ### Reply language
 
@@ -378,10 +318,6 @@ taken.
 The **Activity log** tab holds the full diagnostics of every request. It is the
 first place to look.
 
-For anything involving keys, restrictions or provider errors, see
-**[Getting your API keys](docs/api-keys.md)**, which has an error reference for
-both providers.
-
 ---
 
 ## Known limitations
@@ -390,10 +326,10 @@ Listed for honesty, not because they are unfixable.
 
 - **Prices must be entered by hand.** See the note on quotas: hardcoding them would
   mean showing wrong figures with an air of authority.
+- **One bot per forum in the interface.** The database schema supports more; the
+  configuration tab exposes one.
 - **Quoting the bot does not count as a mention.** If a forum has only the
   *Mentions* trigger enabled, a user who quote-replies to the bot gets no answer.
-- **No automated test suite.** Every part was verified during development, but
-  nothing runs on its own.
 - **The notice language** is the board default at the time of publishing, not the
   reader's: the text is stored in the post.
 - **Development version.** Not yet submitted to the phpBB Extensions team for
@@ -406,7 +342,7 @@ Listed for honesty, not because they are unfixable.
 Copyright © 2026 **Salvo Cortesiano**
 
 Distributed under the **GNU General Public License version 2** (GPL-2.0-only).
-See the [license.txt](license.txt) file.
+See the [LICENSE](LICENSE) file.
 
 The overall architecture — bot as a real phpBB user, job queue, status shown under
 the post, publishing through `submit_post()` with a temporary user switch — is
@@ -417,3 +353,215 @@ deliberately diverges are documented in the comments.
 
 phpBB® is a registered trademark of phpBB Limited. This extension is not affiliated
 with phpBB Limited, OpenAI or Google.
+
+# Getting your API keys
+
+AI Reply needs an API key from OpenAI, from Google Gemini, or from both. Obtaining
+one takes a few minutes; the traps are in the restrictions applied to the key, and
+they produce error messages that point in the wrong direction.
+
+This guide covers what actually goes wrong, not just the happy path.
+
+---
+
+## The rule that saves you an afternoon
+
+**Verify every key with `curl` before touching the forum.**
+
+A key that fails in the extension may be failing for a dozen reasons; a key that
+fails in `curl` is failing for exactly one, and the error message is the provider's
+own. Do not configure the bot with an unverified key.
+
+```bash
+# Google Gemini
+curl -s "https://generativelanguage.googleapis.com/v1beta/models" \
+  -H "x-goog-api-key: YOUR_KEY"
+
+# OpenAI
+curl -s https://api.openai.com/v1/models \
+  -H "Authorization: Bearer YOUR_KEY"
+```
+
+Both should return a JSON list of models. Anything else means the key is not ready.
+
+`curl.exe` ships with Windows 10 and 11. If you have no shell at all, you can open
+`https://generativelanguage.googleapis.com/v1beta/models?key=YOUR_KEY` in a browser
+— but use a private window, or a cached response from a previous attempt will
+mislead you, and clear your history afterwards since the key ends up in it.
+
+---
+
+## Google Gemini
+
+### Route A — Google AI Studio (recommended)
+
+1. Go to **aistudio.google.com** and sign in
+2. **Get API key** → **Create API key**
+3. When asked which project to use, choose **Create API key in new project**
+4. Copy the key and verify it with the `curl` command above
+
+AI Studio enables the API, sets the restrictions and links the service account for
+you. Choosing an existing project is where most problems begin: if that project
+does not have the Gemini API enabled, the key is issued but rejected.
+
+### Route B — Google Cloud Console
+
+Use this only if Route A is unavailable to you.
+
+1. **console.cloud.google.com** → make sure the correct project is selected in the
+   top bar. This is the single most common mistake.
+2. **APIs & Services** → **Library** → search **Gemini API** → **Enable**
+
+   > **Naming trap.** In the Console the API is listed as **Gemini API**. In every
+   > error message, and in the API restrictions dropdown, it appears under its
+   > service name `generativelanguage.googleapis.com`. Searching for "Generative
+   > Language API" in the Library may find nothing. They are the same thing.
+
+3. **APIs & Services** → **Credentials** → **Create credentials** → **API key**
+4. Open the key and set:
+   - **API restrictions** → **Restrict key** → tick **Gemini API**
+   - **Application restrictions** → **None**
+5. Save and wait up to 5 minutes for the change to propagate
+6. Verify with `curl`
+
+### The restriction traps
+
+**"Restrict key" is mandatory, not optional.** Since June 2026 Google blocks Gemini
+calls from keys that have no API restrictions configured. A key set to allow any
+API will fail with `API_KEY_SERVICE_BLOCKED`. This is the opposite of the usual
+advice, and the opposite of what "leave it unrestricted to make it work" suggests.
+
+**Application restrictions must be None.** A forum calls the API from the server,
+not from a browser. If the key is restricted to HTTP referrers or to IP addresses,
+your server is rejected. Either set None, or add the server's public IP.
+
+**Method-level restrictions are a thing.** A key can be allowed to call
+`generateContent` but not `ListModels`. The bot still works; only the model
+dropdown stays empty. AI Reply detects this, falls back to a tiny test generation
+to confirm the key is alive, and lets you type the model name by hand.
+
+**Key formats.** Google is migrating from `AIza…` keys to a newer `AQ.…` format.
+Both are legitimate and AI Reply accepts both. If an `AQ.` key is rejected by the
+REST endpoint — which some accounts report — try generating an `AIza` key from the
+Cloud Console instead.
+
+**Retired models.** `ListModels` may list models your account can no longer use.
+Calling one returns `404` with *"no longer available to new users"*. Prefer the
+alias `gemini-flash-lite-latest`, which always points at a live release and does
+not go stale.
+
+### Gemini error reference
+
+| Error | Meaning | Fix |
+|---|---|---|
+| `API_KEY_SERVICE_BLOCKED` | the key's allowed-API list does not include Gemini | Credentials → key → Restrict key → tick Gemini API |
+| `SERVICE_DISABLED` | the API is not enabled on the project | Library → Gemini API → Enable |
+| `API key not valid` | wrong or malformed key | check for stray spaces; regenerate |
+| `403` on `ListModels` only | method-level restriction | harmless; type the model name manually |
+| `404 no longer available` | retired model | switch to `gemini-flash-lite-latest` |
+| `429` | rate limit | wait; AI Reply retries with backoff |
+
+---
+
+## OpenAI
+
+1. Go to **platform.openai.com** and sign in
+2. **Settings** → **Billing** → add a payment method and some credit
+
+   > API access is **not** included with a ChatGPT Plus subscription, and there is
+   > no free tier for new accounts. Without credit, every call returns
+   > `insufficient_quota`.
+
+3. **API keys** → **Create new secret key**
+4. Copy it immediately — it is shown only once
+5. Verify with `curl`
+
+### Project key scopes
+
+OpenAI project keys can be created with restricted permissions. Listing models
+requires the `model.read` scope. Without it you get:
+
+> You have insufficient permissions for this operation. Missing scopes: model.read
+
+As with Gemini, the bot still works — only the model dropdown stays empty. AI Reply
+detects this and lets you enter the model by hand.
+
+### Model parameter notes
+
+Reasoning models (GPT-5 family, o-series) reject the `temperature` parameter. AI
+Reply omits it automatically and tells you in the interface.
+
+On the same models, thinking tokens count towards the output limit. Setting
+**Maximum output tokens** too low makes the model spend its whole budget reasoning
+and return an empty reply. Stay above 2000.
+
+### OpenAI error reference
+
+| Error | Meaning | Fix |
+|---|---|---|
+| `invalid_api_key` | wrong or revoked key | regenerate |
+| `insufficient_quota` | no credit on the account | add credit under Billing |
+| `insufficient_permissions` | project key lacks a scope | recreate with `model.read`, or type the model manually |
+| `model_not_found` | wrong model ID, or not available to your account | refresh the model list |
+| `429` | rate limit | wait; AI Reply retries with backoff |
+
+---
+
+## Storing the key
+
+Once `curl` succeeds, add the key to the bottom of the board's `config.php`:
+
+```php
+define('AIREPLY_OPENAI_KEY', 'sk-proj-xxxxxxxx');
+define('AIREPLY_GEMINI_KEY', 'AIzaSyxxxxxxxx');
+```
+
+Then, in ACP → **AI Reply** → **Bots**, write in the key field:
+
+```
+const:AIREPLY_GEMINI_KEY
+```
+
+Three forms are accepted:
+
+| Form | Where the key lives |
+|---|---|
+| `const:NAME` | `config.php` — **recommended** |
+| `env:NAME` | environment variable — **recommended** |
+| `sk-…` | database, in clear text |
+
+The literal value works. The reason to avoid it is that `config.php` does not end
+up in the SQL dumps you hand to technical support or upload to a help forum, and
+the field then contains nothing for a browser password manager to overwrite.
+
+---
+
+## If a key stops working
+
+Check in this order — it goes from most to least likely:
+
+1. **Did anything change on the provider side?** Restrictions, billing, project.
+2. **Verify with `curl`.** If it fails there, the forum is not involved.
+3. **Check ACP → AI Reply → Activity log.** Open a failed job's *Diagnostics*: it
+   shows the HTTP status, the provider's own message and how AI Reply classified
+   it, with credentials redacted.
+4. **Check the key in the interface.** Under the key field, AI Reply shows the
+   length and the detected format. If it reads *unrecognised format*, something
+   other than your key is stored — a browser password manager filling the field is
+   the usual culprit.
+
+---
+
+## Security
+
+- Never paste an API key into a forum post, a chat, or an issue report. Treat any
+  key you have shared as compromised and revoke it.
+- Keys in `config.php` are excluded from database backups; keys in the database are
+  not.
+- Set a spending limit in the provider's own console as well. The caps in AI Reply
+  protect against runaway usage by the extension, not against anything else that
+  might use the same key.
+
+---
+
+*AI Reply — Copyright © 2026 Salvo Cortesiano — GPL-2.0-only*
